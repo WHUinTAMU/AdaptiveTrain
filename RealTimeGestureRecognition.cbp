@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="RealTimeGestureRecognition" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/RealTimeGestureRecognition" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add directory="C:/Users/weizi/Documents/GitHub/MotionNetProject/RealTimeGestureRecognition/lib" />
+				</Compiler>
+				<Linker>
+					<Add option='-l&quot;ws2_32&quot;' />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/RealTimeGestureRecognition" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Unit filename="DataCalibrator.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="DataCalibrator.h" />
+		<Unit filename="DataNode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="DataNode.h" />
+		<Unit filename="FileUtil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="FileUtil.h" />
+		<Unit filename="GSLMatrixs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="GSLMatrixs.h" />
+		<Unit filename="LampCmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="LampCmd.h" />
+		<Unit filename="LampController.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="LampController.h" />
+		<Unit filename="PktParser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="PktParser.h" />
+		<Unit filename="RealTimeGestureRecognition.cbp" />
+		<Unit filename="SPRING.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SPRING.h" />
+		<Unit filename="SerialPort.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SerialPort.h" />
+		<Unit filename="TargetRecognition.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="TargetRecognition.h" />
+		<Unit filename="TestData.h" />
+		<Unit filename="cJSON.h" />
+		<Unit filename="cjson.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
