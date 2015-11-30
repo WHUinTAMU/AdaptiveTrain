@@ -81,7 +81,7 @@ void update_array(GRProcess *grp, PktData xt, int position)
 *grProcess:the process struct of the specific type of gesture
 *xt:the type recognized
 */
-int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool isSkip, bool isWrite, bool isPrint)
+int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool isSkip, bool isWriteDistance, bool isPrint, int target)
 {
     int is_gesture = NONE_TYPE;
 
@@ -167,8 +167,9 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
                                   getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_LEFT_FULL_TYPE;break;
                         case CLICK_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nCLICK!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = CLICK_TYPE;break;
-                        case CUSTOM_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nCustom!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-                                 *dmin,*ts,*te,position,*timee - *times);is_gesture = CUSTOM_TYPE;break;
+                        case CUSTOM_TYPE:createCommand(grProcess->functionNum,target);printf("\n\n!!!!!!!!\nsuccess!\n%s!!!\nfunction is %d!!!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n"
+                                ,grProcess->name,grProcess->functionNum
+                                 ,*dmin,*ts,*te,position,*timee - *times);is_gesture = CUSTOM_TYPE;break;
 
                     }
                 }
@@ -204,7 +205,7 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
 
         //printf("dmin=%lf:::te=%d:::ts=%d:::timee=%d:::times=%d:::time=%d\n",*dmin,*te,*ts,*timee,*times,*timee-*times);
     }
-    if(isWrite)
+    if(isWriteDistance)
     {
         write_distance_to_file("./distance.txt", xt.pktNumber, grProcess->distanceArray[m], is_gesture == CUSTOM_TYPE);
     }

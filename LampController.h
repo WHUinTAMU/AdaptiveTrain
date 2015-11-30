@@ -5,6 +5,12 @@
 #include "LampCmd.h"
 #include <stdio.h>
 
+#define ON_OFF_TYPE 0
+#define BRI_UP_TYPE 1
+#define BRI_DOWN_TYPE 2
+#define HUE_UP_TYPE 3
+#define HUE_DOWN_TYPE 4
+
 #define ON_TYPE 0
 #define BRI_TYPE 1
 #define HUE_TYPE 2
@@ -22,6 +28,6 @@ bool onValue[4];
 int briValue[4];
 int hueValue[4];
 
-bool createCommand(int stateType, int valueChange, int target);
+bool createCommand(int stateType, int target);
 
 #endif // LAMPCONTROLLER_H_INCLUDED

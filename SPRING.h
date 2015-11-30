@@ -7,6 +7,7 @@
 #include <math.h>
 #include <float.h>
 #include "DataNode.h"
+#include "LampControl.h"
 
 #define CLICK_THRESHOLD 800
 #define CLICK_TIMELIMIT 300
@@ -62,6 +63,11 @@ typedef struct originalGesture{
     int m;// the length of the list
 }OriginalGesture;
 
+typedef struct customGestureParameter{
+    double threshold;
+    int timeSpan;
+}CustomGestureParameter;
+
 /**
 *the process struct of one kind of gesture
 */
@@ -81,6 +87,9 @@ typedef struct gestureRecognitionProcess{
     double threshold;// threshold
     int type;// determine which gesture it is
     long int timeLimit;// time limit of a piece of right data
+    struct gestureRecognitionProcess *next;
+    char *name;
+    int functionNum;
 
 }GRProcess;
 
@@ -97,7 +106,7 @@ void update_array(GRProcess *grProcess, PktData xt, int position);
 *xt:the current data inputed
 return: the front of the queue
 */
-int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue *queue, bool isSkip, bool isWrite, bool isPrint);
+int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue *queue, bool isSkip, bool isWriteDistance, bool isPrint, int target);
 
 double getDegreeFromGyro(int start, int end, SqQueue *queue);
 

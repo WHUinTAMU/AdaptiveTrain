@@ -99,12 +99,12 @@ PktData blockingReadOnePacket(HANDLE hComm) {
         //printf("pktTime:%d\n",pktData.timeStamp);
 
         //if(packet[19] != 0 || packet[20] != 0 || packet[21] != 0 || packet[22] != 0)
-            printf("%ld, %d, %u, %u, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %d, %d, %d \n",
-                   pktData.timeStamp, pktData.pktNumber, packet[24], packet[23],
-                     pktData.accX, pktData.accY, pktData.accZ, pktData.gyroZ
-                   , pktData.gyroY, pktData.gyroZ, pktData.magX, pktData.magY
-                   , pktData.magZ, pktData.rssiData1, pktData.rssiData2, pktData.rssiData3
-                   , pktData.rssiData4);
+//            printf("%ld, %d, %u, %u, %f, %f, %f, %f, %f, %f, %f, %f, %f, %d, %d, %d, %d \n",
+//                   pktData.timeStamp, pktData.pktNumber, packet[24], packet[23],
+//                     pktData.accX, pktData.accY, pktData.accZ, pktData.gyroZ
+//                   , pktData.gyroY, pktData.gyroZ, pktData.magX, pktData.magY
+//                   , pktData.magZ, pktData.rssiData1, pktData.rssiData2, pktData.rssiData3
+//                   , pktData.rssiData4);
         }
     return pktData;
 }

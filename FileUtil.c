@@ -61,7 +61,7 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName) {
     FILE * fp;
     /* open */
     if ((fp = fopen(fileName,"r")) == NULL) {
-        printf("Can't open ts_list.txt\n");
+        printf("Can't open %s\n",fileName);
         exit(1);
     }
 
@@ -112,6 +112,24 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName) {
     return og;
 }
 
+CustomGestureParameter read_custom_gesture_parameter(char * fileName)
+{
+    FILE * fp;
+    /* open */
+    if ((fp = fopen(fileName,"r")) == NULL) {
+        printf("Can't open %s\n",fileName);
+        exit(1);
+    }
+
+    CustomGestureParameter * cgp = (CustomGestureParameter*) malloc(sizeof(CustomGestureParameter));
+    if(EOF != fscanf(fp, "%lf\t%d",&(cgp->threshold),&(cgp->timeSpan)))
+    {
+        return *cgp;
+    }
+    printf("error happend when load custom gesture parameter\n");
+    return *cgp;
+}
+
 void save_user_template(char * fileName, DataHeadNode *dataHeadNode)
 {
     DataNode *ptr = dataHeadNode->head;
@@ -138,5 +156,71 @@ void write_distance_to_file(char * fileName, int num, double d, bool is)
 {
     FILE *stream = fopen(fileName, "a+");
     fprintf(stream, "%d\t%lf\t%d\n", num,d > DBL_MAX - 1 ? 6000 : d,is == true ? d : 0);
+    fclose(stream);
+}
+
+void insert_new_custom_gesture_item(CustomGestureItem item)
+{
+    FILE *stream = fopen("./custom_gesture/list.txt", "a+");
+    fprintf(stream, "%d\t%s\n", item.gestureFunction, item.gestureName);
+    printf("insert list done!\n");
+    fclose(stream);
+}
+
+void load_custom_gesture_list(CustomGestureList *cList)
+{
+    FILE * fp;
+    /* open */
+    if ((fp = fopen("./custom_gesture/list.txt","r")) == NULL) {
+        printf("Can't open ./custom_gesture/list.txt\n");
+        exit(1);
+    }
+
+    bool isFirst = true;
+    int type;
+
+    int i = 0;
+    CustomGestureItem *p;
+    char tmpName[60];
+    while(EOF != fscanf(fp, "%d\t%s",&type,tmpName))
+    {
+        char *cgName = (char*)malloc(sizeof(char) * 61);
+        sprintf(cgName, "%s", tmpName);
+        CustomGestureItem *item = (CustomGestureItem*) malloc(sizeof(CustomGestureItem));
+        item->gestureFunction = type;
+        item->gestureName = cgName;
+        //printf("load %s\n",item->gestureName);
+
+        if(isFirst)
+        {
+            isFirst = false;
+            cList->head = item;
+        }
+        else
+        {
+            p->next = item;
+        }
+
+        p = item;
+        i++;
+    }
+    p->next = NULL;
+//    p = cList->head;
+//    while(p != NULL)
+//    {
+//        printf("load %s\n",p->gestureName);
+//        p = p->next;
+//    }
+
+    /* close */
+    fclose(fp);
+
+    cList->length = i;
+}
+
+void save_user_template_parameter(double threshold, int timeSpan, char * name)
+{
+    FILE *stream = fopen(name, "a+");
+    fprintf(stream, "%lf\t%d\n", threshold, timeSpan);
     fclose(stream);
 }
