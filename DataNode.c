@@ -68,7 +68,7 @@ bool compare_list_and_delete_queue(SqQueue* queue, int* startList, int length) {
     int num = -1;
     for(i = 0; i < length; i++) {
         int distance = startList[i] - queue->front;
-        distance = distance >= 0 ? distance : (1000 - queue->front) + startList[i];
+        distance = distance >= 0 ? distance : (MAX_SIZE - 1 - queue->front) + startList[i];
         if(distance < min) {
             min = distance;
             num = i;
@@ -81,10 +81,10 @@ bool compare_list_and_delete_queue(SqQueue* queue, int* startList, int length) {
 
 bool compare_two_position(SqQueue* queue, int a, int b) {
     int distanceA = a - queue->front;
-    distanceA = distanceA >= 0 ? distanceA : (1000 - queue->front) + a;
+    distanceA = distanceA >= 0 ? distanceA : (MAX_SIZE - 1 - queue->front) + a;
 
     int distanceB = b - queue->front;
-    distanceB = distanceB >= 0 ? distanceB : (1000 - queue->front) + b;
+    distanceB = distanceB >= 0 ? distanceB : (MAX_SIZE - 1 - queue->front) + b;
 
     return (distanceA >= distanceB)? true : false;
 }

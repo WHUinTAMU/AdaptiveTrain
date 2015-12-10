@@ -7,7 +7,7 @@
 #include <math.h>
 #include <float.h>
 #include "DataNode.h"
-#include "LampControl.h"
+#include "LampController.h"
 
 #define CLICK_THRESHOLD 800
 #define CLICK_TIMELIMIT 300
@@ -54,12 +54,49 @@
 
 #define DTW_NUM 10
 
+#define PATH_LEFT 0
+#define PATH_DOWN 1
+#define PATH_CORNER 2
+
+typedef struct warpingPathTypeItem{
+    int type;
+    struct warpingPathTypeItem *next;
+    struct warpingPathTypeItem *pre;
+    int position;
+    int y;
+}WarpingPathTypeItem;
+
+typedef struct warpingPathItem{
+    int x;
+    int y;
+    int fx;
+    int fy;
+    int path;
+}WarpingPathItem;
+
+typedef struct warpingPathList{
+    int lengthY;
+    WarpingPathItem *itemArray;
+    int position;
+    struct warpingPathList *next;
+    struct warpingPathList *pre;
+}WarpingPathList;
+
+typedef struct warpingPathListHead{
+    WarpingPathList *head;
+    WarpingPathList *tail;
+    int length;
+    long int headNum;
+
+}WarpingPathListHead;
 
 /**
 *original gesture model struct
 */
 typedef struct originalGesture{
     DataHeadNode *head; //the head node of the list of the model data
+    DataHeadNode *magListHead;
+    int magNum;
     int m;// the length of the list
 }OriginalGesture;
 
@@ -90,15 +127,36 @@ typedef struct gestureRecognitionProcess{
     struct gestureRecognitionProcess *next;
     char *name;
     int functionNum;
+    WarpingPathListHead warpingPathMetrixHead;
+    WarpingPathItem *warpingPathArray;
 
 }GRProcess;
+
+typedef struct averageList
+{
+ DataNode *head;
+ struct averageList *next;
+ struct averageList *pre;
+ }AverageList;
+
+typedef struct Node
+{
+  DataNode *data;
+  struct Node *pNext;
+}NODE,*PNODE;
+
+typedef struct Stack       //虽然产生了栈顶，和栈底，但都是垃圾数字，不是真正意义上的
+{
+    PNODE pTop;//栈顶
+    PNODE pBottom;//栈底
+}STACK,*PSTACK;
 
 /**
 *TASK:the process struct of one kind of gesture
 *grp:the process struct of the specific type of gesture
 *xt:the current data inputed
 */
-void update_array(GRProcess *grProcess, PktData xt, int position);
+void update_array(GRProcess *grProcess, PktData xt, int position, bool usePath);
 
 /**
 *TASK:the main part of the DTW algorithm
@@ -106,10 +164,24 @@ void update_array(GRProcess *grProcess, PktData xt, int position);
 *xt:the current data inputed
 return: the front of the queue
 */
-int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue *queue, bool isSkip, bool isWriteDistance, bool isPrint, int target);
+int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue *queue, bool isSkip, bool isWriteDistance, bool isPrint, bool usePath, WarpingPathTypeItem **pathList);
 
 double getDegreeFromGyro(int start, int end, SqQueue *queue);
 
 double compute_traditional_DTW(OriginalGesture *og, DataHeadNode *head);
+
+
+AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, int s, int e);
+
+double compute_magdata_distance(AverageList *normalizedUserData, DataHeadNode *dhn);
+
+DataHeadNode *transferSqQueueToDhn(SqQueue *queue, int start, int end);
+
+bool empty(PSTACK pS);
+
+void push(PSTACK pS, DataNode *val);
+
+bool pop(PSTACK pS, DataNode **pVal);
+
 
 #endif // SPRING_H

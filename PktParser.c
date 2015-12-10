@@ -1,5 +1,5 @@
 #include "PktParser.h"
-long PKT_NUMBER = 0;
+long PKT_NUMBER = 1;
 
 unsigned int getLocalTime() {
     //watchout for 23:59:59.999 -> 0:0:0.000

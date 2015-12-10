@@ -9,6 +9,7 @@
 typedef struct customGestureItem{
     char *gestureName;
     int gestureFunction;
+    int magNum;
     struct customGestureItem * next;
 }CustomGestureItem;
 
@@ -18,7 +19,7 @@ typedef struct custemGetsureList{
     int length;
 }CustomGestureList;
 
-OriginalGesture *read_file_to_init_original_gesture(char * fileName);
+OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag, bool isMagTemlpate, int magTemplateNum, char *gestureName);
 
 CustomGestureParameter read_custom_gesture_parameter(char * fileName);
 
@@ -37,5 +38,9 @@ void save_user_template_parameter(double threshold, int timeSpan, char * name);
 void insert_new_custom_gesture_item(CustomGestureItem item);
 
 void load_custom_gesture_list(CustomGestureList *cList);
+
+void save_mag_template(char * fileName, AverageList *userMagData);
+
+void save_path_template(char *,WarpingPathTypeItem *);
 
 #endif // FILEUTIL_H

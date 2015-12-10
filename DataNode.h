@@ -86,6 +86,7 @@ typedef struct dataHeadNode {
     int length;
     DataNode * head;
     DataNode * tail;
+    struct dataHeadNode *next;
 } DataHeadNode;
 
 //Compare 2 packet data, if all their fields are the same, return true.

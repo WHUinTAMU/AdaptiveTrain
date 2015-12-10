@@ -126,7 +126,7 @@ char* createRequestStr(char* method, char* _url, char* headers) {
 	}
 
 	printf("===========================  Request  ==========================\n");
-	//puts(req);
+	puts(req);
 	return req;
 }
 

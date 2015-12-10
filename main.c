@@ -229,12 +229,12 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
 {
     OriginalGesture *og;
     GRProcess grp;
-    og = read_file_to_init_original_gesture(ogFileName);
+    og = read_file_to_init_original_gesture(ogFileName, true, false,0,NULL);
     int m = og->m;
 
-    OriginalGesture *normalGesture = read_file_to_init_original_gesture("./gesture_model/click.txt");
-    int threshold = compute_traditional_DTW(og, normalGesture->head) / 1.5;
-    int timeLimit = 0;userTimeSpan - 1000 > 0 ? userTimeSpan - 1000 : userTimeSpan;
+    OriginalGesture *normalGesture = read_file_to_init_original_gesture("./gesture_model/click.txt",false,false,0,NULL);
+    int threshold = compute_traditional_DTW(og, normalGesture->head) / 1.3;
+    int timeLimit = 200;//userTimeSpan - 1500 > 0 ? userTimeSpan - 1500 : userTimeSpan;
     printf("timeLimit = %d####################threshold = %d\n",timeLimit,threshold);
 
     //Pay attention to Free memory !!!
@@ -268,6 +268,7 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
     grp.times = 0;
     grp.type = CUSTOM_TYPE;
     grp.timeLimit = timeLimit;
+    grp.name = customGestureName;
 
     printf("please repeat the gesture for at least six times!!\n\n");
 
@@ -277,7 +278,7 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
     double thresholdArray[m * 5];
     int timeSpanArray[m * 5];
     int springType = NONE_TYPE;
-    int dataNum = grp.originalGesture.m * 5 * 1.5;
+    int dataNum = grp.originalGesture.m > 70 ?  grp.originalGesture.m * 5 * 2 : grp.originalGesture.m * 5 * 4;
 
     char trainFileName[60];
     sprintf(trainFileName, "./%d_train.txt"
@@ -292,19 +293,17 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
         pktData = blockingReadOnePacket(hComm);
         if(equals(pktData, ZERO_PKT)) {
             i--;
-            printf("******************************\n");
+
             continue;
         }
         pktData.pktNumber = i + 1;
         int position = add_to_queue(queue, pktData);
-//        printf("%f\t%f\t%f\t%f\t%f\t%f\t%d\n", pktData.accX, pktData.accY, pktData.accZ,
-//            pktData.gyroX, pktData.gyroY, pktData.gyroZ, pktData.pktNumber);
+
         //write_pkt_to_file(stream, pktData);
         add_to_list_end(trainHead, pktData);
 
         //input the current data into the SPRING
-        springType = SPRING(pktData, &grp, position, queue, false, true, true, 1);
-        //printf("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%d\n",springType);
+        springType = SPRING(pktData, &grp, position, queue, false, true, true, false, true);
 
         if(springType == CUSTOM_TYPE)
         {
@@ -343,21 +342,44 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
     {
         thresholdTrue += thresholdArray[i];
         timeSpanTrue += (timeSpanArray[i] > 4000 ? 4000 : timeSpanArray[i]);
-        printf("$$$$$$$$$$$$$$%i$$$$$$threshold = %f::::timespan = %d\n",i,thresholdArray[i],timeSpanArray[i]);
+        printf("\n\nthe %i th  gesture choose, threshold = %f, timespan = %d\n",i,thresholdArray[i],timeSpanArray[i]);
     }
 
     thresholdTrue /= 5;
     timeSpanTrue /= 5;
-    grp.timeLimit = timeSpanTrue - 400 > 100 ? timeSpanTrue - 400 : timeSpanTrue;
-    grp.threshold = thresholdTrue + 70;
+    grp.timeLimit = timeSpanTrue - 600 > 100 ? timeSpanTrue - 600 : timeSpanTrue;
+    grp.threshold = thresholdTrue + 60;
 
     char paraFileName[90];
     sprintf(paraFileName, "./custom_gesture/%s_parameter.txt",customGestureName);
     save_user_template_parameter(grp.threshold, grp.timeLimit, paraFileName);
 
-    printf("train successfully!!!!threshold = %f\ntimespan = %d\n",grp.threshold,grp.timeLimit);
+    printf("train successfully!\nthreshold = %f\ntimespan = %d\n",grp.threshold,grp.timeLimit);
 
     free_queue(queue);
+    dmin = DBL_MAX;
+    te = 1;
+    ts = 1;
+    grp.dmin = dmin;
+    grp.te = te;
+    grp.ts = ts;
+    grp.times = 0;
+    grp.timee = 0;
+    WarpingPathList *warpingPathList = (WarpingPathList*) malloc(sizeof(WarpingPathList));
+    warpingPathList->lengthY = m;
+    warpingPathList->position = -1;
+    warpingPathList->next = NULL;
+    warpingPathList->pre = NULL;
+    grp.warpingPathMetrixHead.head = warpingPathList;
+    grp.warpingPathMetrixHead.tail = warpingPathList;
+    grp.warpingPathMetrixHead.headNum = -1;
+    grp.warpingPathMetrixHead.length = 1;
+    for(k = 0; k  <= m; k++) {
+        grp.distanceArrayLast[k] = DBL_MAX;
+        grp.startArrayLast[k] = 0;
+        grp.timeArrayLast[k] = 0;
+    }
+
     return grp;
 }
 
@@ -367,9 +389,6 @@ void collect_template(HANDLE hComm)
 
     char rawDataFileName[60];  			//The file stores raw data
     char correctedDataFileName[60];  	//The file stores corrected magnetic data
-
-    //sprintf(rawDataFileName, "C:/Users/xing/Desktop/%s_Raw_Mag_Data.txt",params->gszPort);
-    //sprintf(correctedDataFileName, "C:/Users/xing/Desktop/%s_Corrected_Mag_Data.txt",params->gszPort);
 
     //the models of the four gestures
     char *gestureModel[DTW_NUM + 1] = {"./gesture_model/target.txt"
@@ -404,7 +423,7 @@ void collect_template(HANDLE hComm)
     GRProcess grp[DTW_NUM + 1];
     int gt = 0;
     for(gt = 0; gt < DTW_NUM + 1; gt++) {
-        og[gt] = read_file_to_init_original_gesture(gestureModel[gt]);
+        og[gt] = read_file_to_init_original_gesture(gestureModel[gt],false,false,0,NULL);
         int m = og[gt]->m;
         //Pay attention to Free memory !!!
         double *distanceArray = (double *)malloc(sizeof(double) * (m + 1));
@@ -479,7 +498,7 @@ void collect_template(HANDLE hComm)
             //input the current data into the SPRING
             int l = 0;
             for(l = DTW_NUM; l <= DTW_NUM; l++) {
-                springType = SPRING(pktData, &grp[l],position, queue, false, false, false, 1);
+                springType = SPRING(pktData, &grp[l],position, queue, false, false, false, false, NULL);
             }
 
             if(isRecord == true)
@@ -498,13 +517,13 @@ void collect_template(HANDLE hComm)
                     isRecord = false;
                     printf("saving the template.....\n");
                     //delete the click data from the list and then output the list to file
-                    long timeStampTmp = queue->timeStamp[grp[CLICK_TYPE].ts + 20];
-                    printf("end time:%d\n",timeStampTmp);
+                    long timeStampTmp = queue->timeStamp[(grp[CLICK_TYPE].ts - 10 + MAX_SIZE - 1) % (MAX_SIZE - 1)];
+                    //printf("end time:%d\n",timeStampTmp);
 
                     DataNode *head = targetHead->head;
                     while(head->next != NULL)
                     {
-                        printf("%d:::::%d\n",timeStampTmp,head->next->packetData.timeStamp);
+                        //printf("%d:::::%d\n",timeStampTmp,head->next->packetData.timeStamp);
                         if(head->next->packetData.timeStamp == timeStampTmp)
                         {
                             DataNode *tmpList = head->next;
@@ -514,25 +533,24 @@ void collect_template(HANDLE hComm)
                         }
                         head = head->next;
                     }
-                    printf("going to save!\n");
+                    //printf("going to save!\n");
                     char templateFileName[90];
                     sprintf(templateFileName, "./custom_gesture/%s_template.txt",customGestureName);
+                    int j = 0;
+                    for(j = 0; j < 10; j++)
+                    {
+                        targetHead->head = targetHead->head->next;
+                    }
                     save_user_template(templateFileName, targetHead);
 
                     int userTimeSpan = targetHead->tail->packetData.timeStamp - targetHead->head->packetData.timeStamp;
-                    printf("start time = %d ::: end time = %d",targetHead->head->packetData.timeStamp
-                           ,targetHead->tail->packetData.timeStamp);
+                    //printf("start time = %d ::: end time = %d",targetHead->head->packetData.timeStamp,targetHead->tail->packetData.timeStamp);
 
                     clear_list(targetHead);
                     printf("a template has been saved!\n");
 
                     customGRP = trian_user_template(userTimeSpan,templateFileName,hComm,customGestureName);
-                    CustomGestureItem *item = (CustomGestureItem*) malloc(sizeof(CustomGestureItem));
-                    item->gestureFunction = functionNum;
-                    //printf("function num done!!!\n");
-                    item->gestureName = customGestureName;
-                    //printf("name done!!!\n");
-                    insert_new_custom_gesture_item(*item);
+                    //customGRP.functionNum = functionNum;
 
                     clear_queue(queue);
 
@@ -548,6 +566,49 @@ void collect_template(HANDLE hComm)
         //}
     }
 
+    printf("\n\ninput the number of the target you want to recognize:\n");
+    int magNum;
+    scanf("%d",&magNum);
+    int magNumTmp = 0;
+
+    //Before read, flush the buffer.
+    purgePort(hComm);
+
+    WarpingPathTypeItem *pathList = (WarpingPathTypeItem *) malloc(sizeof(WarpingPathTypeItem *));
+    while(magNumTmp < magNum)
+    {
+        pktData = blockingReadOnePacket(hComm);
+        if(equals(pktData, ZERO_PKT)) {
+            continue;
+        }
+
+        //Notice: it will override original raw data if queue is full
+        int position = add_to_queue(queue, pktData);
+
+        int springType = SPRING(pktData,&customGRP,position,queue, false, false, true, true, &pathList);
+
+        if(springType == CUSTOM_TYPE)
+        {
+            /**normalize the mag-----queue,customGRP.originalGesture.head,customGRP.ts,customGRP.te,pathList*/
+            AverageList *normalizedTmpData = Normalization(pathList,queue,customGRP.ts,customGRP.te);
+            /**save them----customGRP.originalGesture.magListHead*/
+
+            char magTempFileName[100];
+            sprintf(magTempFileName, "./custom_gesture/%s_magTemplate_%d.txt", customGestureName,magNumTmp);
+            printf("save %s 's %d th mag template\n",magTempFileName, magNumTmp);
+            save_mag_template(magTempFileName,normalizedTmpData);
+
+            magNumTmp++;
+        }
+    }
+    CustomGestureItem *item = (CustomGestureItem*) malloc(sizeof(CustomGestureItem));
+    item->gestureFunction = functionNum;
+                    //printf("function num done!!!\n");
+    item->gestureName = customGestureName;
+    item->magNum = magNum;
+                    //printf("name done!!!\n");
+    insert_new_custom_gesture_item(*item);
+
     int magLen = get_queue_length(queue);
 
     double heading[magLen];
@@ -557,8 +618,6 @@ void collect_template(HANDLE hComm)
     calibrateMagData(queue->magXData, queue->magYData, queue->magZData, heading, magLen);
 
     write_mag_to_file(correctedDataFileName, queue->magXData, queue->magYData, queue->magZData, heading, magLen);
-
-    printf("\nSee %s \nand %s\nfor more detail!\n\n",rawDataFileName, correctedDataFileName);
 
     free_queue(queue);
     free_list(targetHead);
@@ -608,10 +667,38 @@ void control_lamp(HANDLE hComm)
 
         //Notice: it will override original raw data if queue is full
         int position = add_to_queue(queue, pktData);
+        WarpingPathTypeItem *pathList;
+        int springType;
         while(tmpGRP != NULL)
         {
-            SPRING(pktData,tmpGRP,position,queue, false, false, false, 1);
+            springType = SPRING(pktData,tmpGRP,position,queue, false, false, true, true, &pathList);
+            if(springType == CUSTOM_TYPE)
+            {
+                /**normalize the mag---queue,tmpGRP->originalGesture.head,tmpGRP->ts,tmpGRP->te,pathList*/
+                AverageList *normalizedUserData = Normalization(pathList, queue, tmpGRP->ts, tmpGRP->te);
 
+                DataHeadNode *tmpMagList;
+                tmpMagList = tmpGRP->originalGesture.magListHead;
+                int k = 0;
+                double magDistanceArray[tmpGRP->originalGesture.magNum];
+                double magDisMin = DBL_MAX;
+                int targetNum = 0;
+                for(k = 0; k < tmpGRP->originalGesture.magNum; k++)
+                {
+
+                    /**compute the mag distance---tmpMagList*/
+                    magDistanceArray[k] = compute_magdata_distance(normalizedUserData, tmpMagList) ;
+                    printf("\n\nk=%d;distance=%lf\n", k, magDistanceArray[k]);
+                    if(magDistanceArray[k] < magDisMin)
+                    {
+                        magDisMin = magDistanceArray[k];
+                        targetNum = k + 1;
+                    }
+                    tmpMagList = tmpMagList->next;
+                }
+                createCommand(tmpGRP->functionNum,targetNum);
+
+            }
             tmpGRP = tmpGRP->next;
 
         }
@@ -627,16 +714,16 @@ void show_load_custom_gesture(HANDLE hComm)
     {
         printf("\n\n\n\n\n------------load custom gesture menu---------\n");
         printf("1. back to main menu\n");
-        /**
-        read the custom gesture list and print them
-        */
+        //read the custom gesture list and print them
+
         CustomGestureList *list = (CustomGestureList*) malloc(sizeof(CustomGestureList));
         load_custom_gesture_list(list);
         int i = 0;
         CustomGestureItem *p = list->head;
+
         for(i = 0; i < list->length; i++)
         {
-            printf("%d.%s--%d\n", i + 2, p->gestureName, p->gestureFunction);
+            printf("%d. %s---function num : %d---target num : %d\n", i + 2, p->gestureName, p->gestureFunction, p->magNum);
 
             p = p->next;
         }
@@ -647,6 +734,7 @@ void show_load_custom_gesture(HANDLE hComm)
         {
             printf("%s, ",tmptmpgrp->name);
             tmptmpgrp = tmptmpgrp->next;
+            printf("\n");
         }
         printf("\n");
 
@@ -675,16 +763,25 @@ void show_load_custom_gesture(HANDLE hComm)
                 sprintf(parameterFileName, "./custom_gesture/%s_parameter.txt" ,p->gestureName);
                 OriginalGesture *og;
                 GRProcess *grp = (GRProcess*) malloc(sizeof(GRProcess));
-                og = read_file_to_init_original_gesture(templateFileName);
+                og = read_file_to_init_original_gesture(templateFileName,true,true,p->magNum,p->gestureName);
+                og->magNum = p->magNum;
+                //printf("og mag num = %d\n",og->magNum);
                 CustomGestureParameter cgparam = read_custom_gesture_parameter(parameterFileName);
                 int m = og->m;
                 //Pay attention to Free memory !!!
+                //printf("11111\n");
                 double *distanceArray = (double *)malloc(sizeof(double) * (m + 1));
                 double *distanceArrayLast = (double *)malloc(sizeof(double) * (m + 1));
                 int *startArray = (int *)malloc(sizeof(int) * (m + 1));
                 int *startArrayLast = (int *)malloc(sizeof(int) * (m + 1));
                 long int *timeArray = (long int *)malloc(sizeof(long int) * (m + 1));
                 long int *timeArrayLast = (long int *)malloc(sizeof(long int) * (m + 1));
+                WarpingPathList *warpingPathList = (WarpingPathList*) malloc(sizeof(WarpingPathList));
+                warpingPathList->lengthY = m;
+                warpingPathList->position = -1;
+                warpingPathList->next = NULL;
+                warpingPathList->pre = NULL;
+                //printf("22222\n");
                 double dmin = DBL_MAX;
                 int te = 1;
                 int ts = 1;
@@ -711,6 +808,12 @@ void show_load_custom_gesture(HANDLE hComm)
                 grp->timeLimit = cgparam.timeSpan;
                 grp->name = p->gestureName;
                 grp->functionNum = p->gestureFunction;
+                //printf("33333\n");
+                //grp->warpingPathArray = (WarpingPathItem *) malloc(sizeof(WarpingPathItem) * (m + 1));
+                grp->warpingPathMetrixHead.head = warpingPathList;
+                grp->warpingPathMetrixHead.tail = warpingPathList;
+                grp->warpingPathMetrixHead.headNum = -1;
+                grp->warpingPathMetrixHead.length = 1;
 
                 if(isFirst)
                 {
@@ -722,7 +825,7 @@ void show_load_custom_gesture(HANDLE hComm)
                     grpTmp->next = grp;
                 }
                 grpTmp = grp;
-
+                grp->next = NULL;
                 break;/**load the selected gesture*/
             }
         }
@@ -748,7 +851,7 @@ void show_main_menu(HANDLE hComm)
 }
 
 int main(int argc, char *argv[]) {
-    /*if(getBridgeIP() == 1)
+    if(getBridgeIP() == 1)
     {
 		printf("get bridge IP succeed\n");
     }
@@ -756,7 +859,7 @@ int main(int argc, char *argv[]) {
 	if(getUserName("{\"devicetype\":\"my_hue_app#iphone peter\"}"))
     {
     	printf("get username succeed\n");
-    }*/
+    }
 
     //printf("how many sensors do you have :\n");
     int portCount = 1;

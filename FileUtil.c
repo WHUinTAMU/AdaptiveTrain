@@ -57,7 +57,7 @@ void write_mag_to_file(char * fileName, double x[], double y[], double z[], doub
     fclose(stream);
 }
 
-OriginalGesture *read_file_to_init_original_gesture(char * fileName) {
+OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag, bool isMagTemplate, int magTemplateNum, char *gestureName) {
     FILE * fp;
     /* open */
     if ((fp = fopen(fileName,"r")) == NULL) {
@@ -69,33 +69,67 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName) {
     OriginalGesture *og = (OriginalGesture*) malloc(sizeof(OriginalGesture));
     DataNode *tmp = NULL;
     DataNode *head = NULL;
-    double tmpArray[6];
+    double tmpArray[9];
     int tmpPktNum = 0;
     int i = 1;
-    while(EOF != fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%d", &tmpArray[0], &tmpArray[1], &tmpArray[2], &tmpArray[3],
-                        &tmpArray[4], &tmpArray[5], &tmpPktNum)) {
-        PktData *pd = (PktData*) malloc(sizeof(PktData));
-        pd->accX = tmpArray[0];
-        pd->accY = tmpArray[1];
-        pd->accZ = tmpArray[2];
-        pd->gyroX = tmpArray[3];
-        pd->gyroY = tmpArray[4];
-        pd->gyroZ = tmpArray[5];
-        pd->pktNumber = tmpPktNum;
+    if(isMag)
+    {
+        while(EOF != fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%d", &tmpArray[0], &tmpArray[1], &tmpArray[2], &tmpArray[3],
+                        &tmpArray[4], &tmpArray[5], &tmpArray[6], &tmpArray[7], &tmpArray[8], &tmpPktNum)) {
+            PktData *pd = (PktData*) malloc(sizeof(PktData));
+            pd->accX = tmpArray[0];
+            pd->accY = tmpArray[1];
+            pd->accZ = tmpArray[2];
+            pd->gyroX = tmpArray[3];
+            pd->gyroY = tmpArray[4];
+            pd->gyroZ = tmpArray[5];
+            pd->magX = tmpArray[6];
+            pd->magY = tmpArray[7];
+            pd->magZ = tmpArray[8];
+            pd->pktNumber = tmpPktNum;
 
-        DataNode *dn = (DataNode*) malloc(sizeof(DataNode));
-        dn->packetData = *pd;
+            DataNode *dn = (DataNode*) malloc(sizeof(DataNode));
+            dn->packetData = *pd;
 
-        if(isFirst) {
-            isFirst = false;
-            head = dn;
-            tmp = dn;
-        } else {
-            tmp->next = dn;
-            tmp = dn;
+            if(isFirst) {
+                isFirst = false;
+                head = dn;
+                tmp = dn;
+            } else {
+                tmp->next = dn;
+                tmp = dn;
+            }
+            i++;
+
         }
-        i++;
+    }
+    else
+    {
+        while(EOF != fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%d", &tmpArray[0], &tmpArray[1], &tmpArray[2], &tmpArray[3],
+                        &tmpArray[4], &tmpArray[5], &tmpPktNum)) {
+            PktData *pd = (PktData*) malloc(sizeof(PktData));
+            pd->accX = tmpArray[0];
+            pd->accY = tmpArray[1];
+            pd->accZ = tmpArray[2];
+            pd->gyroX = tmpArray[3];
+            pd->gyroY = tmpArray[4];
+            pd->gyroZ = tmpArray[5];
+            pd->pktNumber = tmpPktNum;
 
+            DataNode *dn = (DataNode*) malloc(sizeof(DataNode));
+            dn->packetData = *pd;
+
+            if(isFirst) {
+                isFirst = false;
+                head = dn;
+                tmp = dn;
+            } else {
+                tmp->next = dn;
+                tmp = dn;
+            }
+            i++;
+
+        }
     }
     tmp->next = NULL;
 
@@ -108,6 +142,76 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName) {
 
     og->head = dhn;
     og->m = i - 1;
+
+    i = 0;
+    if(isMagTemplate)
+    {
+        DataHeadNode *magListHead;
+        DataHeadNode *tmpMagList;
+        char magTempFileName[90];
+        int j = 0;
+        bool isFirstList = true;
+        printf("mag template num = %d\n",magTemplateNum);
+        for(j = 0; j < magTemplateNum; j++)
+        {
+            i = 0;
+            sprintf(magTempFileName, "./custom_gesture/%s_magTemplate_%d.txt", gestureName,j);
+            FILE * fp;
+            /* open */
+            if ((fp = fopen(magTempFileName,"r")) == NULL) {
+                printf("Can't open %s\n",fileName);
+                exit(1);
+            }
+
+
+            bool isFirst = true;
+            DataHeadNode *ml = (DataHeadNode*) malloc(sizeof(DataHeadNode));
+            DataNode *tmp = NULL;
+            DataNode *head = NULL;
+            int tmpPktNum = 0;
+            printf("before read\n");
+            while(EOF != fscanf(fp, "%lf\t%lf\t%lf", &tmpArray[0], &tmpArray[1], &tmpArray[2])) {
+                PktData *pd = (PktData*) malloc(sizeof(PktData));
+                pd->magX = tmpArray[0];
+                pd->magY = tmpArray[1];
+                pd->magZ = tmpArray[2];
+
+                DataNode *dn = (DataNode*) malloc(sizeof(DataNode));
+                dn->packetData = *pd;
+
+                if(isFirst) {
+                    isFirst = false;
+                    head = dn;
+                    tmp = dn;
+                } else {
+                    tmp->next = dn;
+                    tmp = dn;
+                }
+                i++;
+            }
+            printf("after read\n");
+            ml->head = head;
+            if(isFirstList)
+            {
+                magListHead = ml;
+                tmpMagList = ml;
+                isFirstList = false;
+            }
+            else
+            {
+                tmpMagList->next = ml;
+                tmpMagList = ml;
+            }
+            tmpMagList->length = i;
+            /* close */
+            fclose(fp);
+
+        }
+        printf("after for\n");
+        tmpMagList->next = NULL;
+        og->magListHead = magListHead;
+
+    }
 
     return og;
 }
@@ -143,9 +247,9 @@ void save_user_template(char * fileName, DataHeadNode *dataHeadNode)
     while (ptr != NULL) {
         pktData = ptr->packetData;
         i++;
-        fprintf(stream, "%f\t%f\t%f\t%f\t%f\t%f\t%d\n",
+        fprintf(stream, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",
         pktData.accX, pktData.accY, pktData.accZ,
-        pktData.gyroX, pktData.gyroY, pktData.gyroZ,i
+        pktData.gyroX, pktData.gyroY, pktData.gyroZ,pktData.magX,pktData.magY,pktData.magZ,i
         );
         ptr = ptr->next;
     }
@@ -162,7 +266,7 @@ void write_distance_to_file(char * fileName, int num, double d, bool is)
 void insert_new_custom_gesture_item(CustomGestureItem item)
 {
     FILE *stream = fopen("./custom_gesture/list.txt", "a+");
-    fprintf(stream, "%d\t%s\n", item.gestureFunction, item.gestureName);
+    fprintf(stream, "%d\t%s\t%d\n", item.gestureFunction, item.gestureName, item.magNum);
     printf("insert list done!\n");
     fclose(stream);
 }
@@ -182,13 +286,15 @@ void load_custom_gesture_list(CustomGestureList *cList)
     int i = 0;
     CustomGestureItem *p;
     char tmpName[60];
-    while(EOF != fscanf(fp, "%d\t%s",&type,tmpName))
+    int magNum;
+    while(EOF != fscanf(fp, "%d\t%s\t%d",&type,tmpName,&magNum))
     {
         char *cgName = (char*)malloc(sizeof(char) * 61);
         sprintf(cgName, "%s", tmpName);
         CustomGestureItem *item = (CustomGestureItem*) malloc(sizeof(CustomGestureItem));
         item->gestureFunction = type;
         item->gestureName = cgName;
+        item->magNum = magNum;
         //printf("load %s\n",item->gestureName);
 
         if(isFirst)
@@ -222,5 +328,28 @@ void save_user_template_parameter(double threshold, int timeSpan, char * name)
 {
     FILE *stream = fopen(name, "a+");
     fprintf(stream, "%lf\t%d\n", threshold, timeSpan);
+    fclose(stream);
+}
+
+void save_mag_template(char * fileName, AverageList *userMagData)
+{
+    FILE *stream = fopen(fileName, "a+");
+    while(userMagData != NULL)
+    {
+        fprintf(stream, "%lf\t%lf\t%lf\n", userMagData->head->packetData.magX, userMagData->head->packetData.magY, userMagData->head->packetData.magZ);
+        userMagData = userMagData->pre;
+    }
+
+    fclose(stream);
+}
+
+void save_path_template(char *pathFileName,WarpingPathTypeItem * pathList1)
+{
+    FILE *stream = fopen(pathFileName, "a+");
+    while(pathList1 != NULL)
+    {
+        fprintf(stream, "%d\t%d\n", pathList1->position,pathList1->y);
+        pathList1 = pathList1->pre;
+    }
     fclose(stream);
 }

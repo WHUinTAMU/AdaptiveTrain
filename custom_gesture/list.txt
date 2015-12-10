@@ -1,2 +1,6 @@
-0	point
-1	rotateright
+0	seitch	2
+3	hueup	0
+3	hueup2	2
+1	briup	2
+2	bridown	2
+2	bridown2	2
