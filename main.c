@@ -303,7 +303,7 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
         add_to_list_end(trainHead, pktData);
 
         //input the current data into the SPRING
-        springType = SPRING(pktData, &grp, position, queue, false, true, true, false, true);
+        springType = SPRING(pktData, &grp, position, queue, false, false, false, false, NULL);
 
         if(springType == CUSTOM_TYPE)
         {
