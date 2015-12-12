@@ -4,8 +4,6 @@
 *TASK:the process struct of one kind of gesture
 *grp:the process struct of the specific type of gesture
 *xt:the current data inputed
-*position:the position of thr current data in the queue
-*usePath:whether need to compute the warping path
 */
 void update_array(GRProcess *grp, PktData xt, int position, bool usePath)
 {
@@ -16,10 +14,15 @@ void update_array(GRProcess *grp, PktData xt, int position, bool usePath)
     grp->timeArray[0] = xt.timeStamp;
     DataNode *p = grp->originalGesture.head->head;
 
-    //update the distance array and start array
     int i = 0;
+    /*for(i = 0; i <= m;i++)
+    {
+        printf("%lf  ",grp->distanceArrayLast[i]);
+    }*/
+    //printf("@@@@@@@@@%d\n",m);
     for(i = 1; i < m + 1; i++)
     {
+        //printf("!!!%d\n",i);
         int startTmp;
         long int timeTmp;
         double distanceTmp = pow((xt.accX - p->packetData.accX), 2)
@@ -27,10 +30,11 @@ void update_array(GRProcess *grp, PktData xt, int position, bool usePath)
         + pow((xt.gyroX - p->packetData.gyroX), 2) + pow((xt.gyroY - p->packetData.gyroY), 2)
         + pow((xt.gyroZ - p->packetData.gyroZ), 2);
 
-        //record the position and path of a specific place
+        //printf("d[%d - 1] = %lf:::d'[%d] = %lf:::d'[%d - 1] = %lf\n",i,grp->distanceArray[i - 1],i,grp->distanceArrayLast[i],i,grp->distanceArrayLast[i - 1]);
         WarpingPathItem *wpItem;
         if(usePath)
         {
+            //printf("1\n");
             wpItem = (WarpingPathItem*) malloc(sizeof(WarpingPathItem));
         }
 
@@ -41,8 +45,6 @@ void update_array(GRProcess *grp, PktData xt, int position, bool usePath)
                 distanceTmp += grp->distanceArray[i - 1];
                 startTmp = grp->startArray[i - 1];
                 timeTmp = grp->timeArray[i - 1];
-
-                //record the position and path of a specific place
                 if(usePath)
                 {
                     wpItem->x = position;
@@ -101,11 +103,12 @@ void update_array(GRProcess *grp, PktData xt, int position, bool usePath)
         grp->distanceArray[i] = distanceTmp;
         grp->startArray[i] = startTmp;
         grp->timeArray[i] = timeTmp;
-
+        //printf("2\n");
         if(usePath)
         {
             wpItemListTmp[i] = *wpItem;
         }
+        //printf("3\n");
 
         p = p->next;
     }
@@ -113,15 +116,9 @@ void update_array(GRProcess *grp, PktData xt, int position, bool usePath)
 }
 
 /**
-*TASK:the main part of the SPRING DTW algorithm
+*TASK:the main part of the DTW algorithm
 *grProcess:the process struct of the specific type of gesture
-*xt:the current data
-*position:the position of the current data in the queue
-*isSkip:(ignore this variable)
-*isWriteDistance:whether output the DTW distance to a txt file
-*isPrint:whether print the DTW details in the screen
-*usePath:whether compute the warping path
-*pathList:the point of the variable to contain the warping path
+*xt:the type recognized
 */
 int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool isSkip, bool isWriteDistance, bool isPrint, bool usePath, WarpingPathTypeItem **pathList)
 {
@@ -144,6 +141,7 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
         bool is_di_largerthan_dmin = true;
         bool is_si_largerthan_te = true;
 
+        //whether dm > dmin
         int i = 0;
         for(i = m; i <= m; i++)
         {
@@ -162,36 +160,45 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
         {
             //check the time span of the temporary optimal subsequence
             int timeGap = *timee - *times;
+            //printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%d\n",timeGap);
             if(timeGap >= grProcess->timeLimit)
             {
                 //is_gesture = true;
                 int t = grProcess->type;
 
                 //report the right optimal subsequence
+/*                 case POINT_TYPE:createCommand(ON_TYPE,-1,target);printf("\n\n!!!!!!!!\nsuccess!\npoint!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+ *                                   *dmin,*ts,*te,position,*timee - *times);is_gesture = POINT_TYPE;break;
+ *                     case ROTATE_RIGHT_TYPE:createCommand(BRI_TYPE,BRI_VALUE_UP,target);printf("\n\n!!!!!!!!\nsuccess!\nrotate right!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+ *                                   *dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_RIGHT_TYPE;break;
+ *                     case ROTATE_LEFT_TYPE:createCommand(BRI_TYPE,BRI_VALUE_DOWN,target);printf("\n\n!!!!!!!!\nsuccess!\nrotate left!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+ *                                   *dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_LEFT_TYPE;break;
+ *
+ */
                 if(isSkip != true)
                 {
                     switch(t)
                     {
-//                        case POINT_TYPE:printf("\n\n!!!!!!!!\nsuccess!\npoint!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = POINT_TYPE;break;
-//                        case SLIDE_OVER_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nslide over!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = SLIDE_OVER_TYPE;break;
-//                        case STAND_UP_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nstand up!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = STAND_UP_TYPE;break;
-//                        case SIT_DOWN_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nsit down!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = SIT_DOWN_TYPE;break;
-//                        case TARGET_TYPE:/*printf("\n\n!!!!!!!!\nsuccess!\ntarget!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  *dmin,*ts,*te,position,*timee - *times);*/is_gesture = TARGET_TYPE;break;
-//                        case WALK_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nwalk!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = WALK_TYPE;break;
-//                        case ROTATE_RIGHT_HALF_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate right half!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_RIGHT_HALF_TYPE;break;
-//                        case ROTATE_RIGHT_FULL_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate right full!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_RIGHT_FULL_TYPE;break;
-//                        case ROTATE_LEFT_HALF_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate left half!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_LEFT_HALF_TYPE;break;
-//                        case ROTATE_LEFT_FULL_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate left full!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-//                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_LEFT_FULL_TYPE;break;
+                        case POINT_TYPE:printf("\n\n!!!!!!!!\nsuccess!\npoint!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = POINT_TYPE;break;
+                        case SLIDE_OVER_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nslide over!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = SLIDE_OVER_TYPE;break;
+                        case STAND_UP_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nstand up!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = STAND_UP_TYPE;break;
+                        case SIT_DOWN_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nsit down!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = SIT_DOWN_TYPE;break;
+                        case TARGET_TYPE:/*printf("\n\n!!!!!!!!\nsuccess!\ntarget!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  *dmin,*ts,*te,position,*timee - *times);*/is_gesture = TARGET_TYPE;break;
+                        case WALK_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nwalk!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  *dmin,*ts,*te,position,*timee - *times);is_gesture = WALK_TYPE;break;
+                        case ROTATE_RIGHT_HALF_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate right half!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_RIGHT_HALF_TYPE;break;
+                        case ROTATE_RIGHT_FULL_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate right full!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_RIGHT_FULL_TYPE;break;
+                        case ROTATE_LEFT_HALF_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate left half!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_LEFT_HALF_TYPE;break;
+                        case ROTATE_LEFT_FULL_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate left full!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_LEFT_FULL_TYPE;break;
                         case CLICK_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nCLICK!!!\n"/*dmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
                                  *dmin,*ts,*te,position,*timee - *times*/);is_gesture = CLICK_TYPE;break;
                         case CUSTOM_TYPE:printf("\n\n!!!!!!!!\nsuccess!\n%s!!!\nfunction is %d!!!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n"
@@ -199,11 +206,16 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
                                  ,*dmin,*ts,*te,position,*timee - *times);is_gesture = CUSTOM_TYPE;break;
 
                     }
+                    //printf("end - start = %d\n",*te - *ts);
 
                     if(usePath)
                     {
-                        //get the warping path from the end back to the start
+                        //WarpingPathTypeItem *pathList;
+
                         WarpingPathList *tmpWP = grProcess->warpingPathMetrixHead.tail;
+                        //printf("start position of metrix:%d!!!!!!!!!!!end:%d\n",grProcess->warpingPathMetrixHead.headNum,grProcess->warpingPathMetrixHead.tail->position);
+                        //printf("head !!!!!!x = %d;;;y = %d;;;fx = %d;;;fy = %d\n",grProcess->warpingPathMetrixHead.head->itemArray[1].x,grProcess->warpingPathMetrixHead.head->itemArray[1].y,grProcess->warpingPathMetrixHead.head->itemArray[1].fx,grProcess->warpingPathMetrixHead.head->itemArray[1].fy);
+                        //printf("tail!!!!x = %d;;;y = %d;;;fx = %d;;;fy = %d\n",grProcess->warpingPathMetrixHead.tail->itemArray[m].x,grProcess->warpingPathMetrixHead.tail->itemArray[m].y,grProcess->warpingPathMetrixHead.tail->itemArray[m].fx,grProcess->warpingPathMetrixHead.tail->itemArray[1].fy);
                         bool isFirstType = true;
                         int itemNum = m;
                         WarpingPathItem *tmpItem = &(tmpWP->itemArray[itemNum]);
@@ -211,6 +223,7 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
                         while(tmpItem->y > 1)
                         {
 
+                            //printf("y = %d\ntype = %d\nposition = %d\n",tmpItem->y,tmpItem->path,tmpWP->position);
                             WarpingPathTypeItem *type = (WarpingPathTypeItem*) malloc(sizeof(WarpingPathTypeItem));
                             switch(tmpItem->path)
                             {
@@ -256,7 +269,14 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
                             }
 
                         }
-
+//
+//                        //printf("path: ");
+//                        char pathFileName[100];
+//                        sprintf(pathFileName, "./custom_gesture/%s_pathTemplate.txt", grProcess->name);
+//                        WarpingPathTypeItem *pathList1 = *pathList;
+//
+//                        //printf("save %s 's %d th mag template\n",magTempFileName, magNumTmp);
+//                        save_path_template(pathFileName,pathList1);
                     }
                 }
             }
@@ -278,8 +298,11 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
         grProcess->warpingPathMetrixHead.length++;
         if(compare_two_position(queue, grProcess->startArray[m], grProcess->warpingPathMetrixHead.headNum))
         {
+            //printf("1\n");
             WarpingPathList *tmpWPList = grProcess->warpingPathMetrixHead.head;
+            //printf("tmpWPList.itemArray[1].x = %d\n",tmpWPList->itemArray[1].x);
             WarpingPathList *tmpFreeWP;
+            //printf("3\n");
             while(compare_two_position(queue, grProcess->startArray[m], tmpWPList->position))
             {
                 tmpFreeWP = tmpWPList;
@@ -292,6 +315,12 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
             grProcess->warpingPathMetrixHead.headNum = tmpWPList->position;
 
         }
+        //printf("startArray[m] = %d\n",grProcess->startArray[m]);
+        //printf("headNum = %d;;;;head position = %d;;;head itemArray.x = %d",grProcess->warpingPathMetrixHead.headNum,grProcess->warpingPathMetrixHead.head->position,grProcess->warpingPathMetrixHead.head->itemArray[1].x);
+        //printf("length:%d;;;;;headNum = %d;;;;;;;tailNum = %d\n",grProcess->warpingPathMetrixHead.length,grProcess->warpingPathMetrixHead.head->position,grProcess->warpingPathMetrixHead.tail->position);
+        //printf("head !!!!!!x = %d;;;y = %d;;;fx = %d;;;fy = %d\n\n",grProcess->warpingPathMetrixHead.head->itemArray[1].x,grProcess->warpingPathMetrixHead.head->itemArray[1].y,grProcess->warpingPathMetrixHead.head->itemArray[1].fx,grProcess->warpingPathMetrixHead.head->itemArray[1].fy);
+        //printf("tail!!!!x = %d;;;y = %d;;;fx = %d;;;fy = %d\n\n",grProcess->warpingPathMetrixHead.tail->itemArray[m].x,grProcess->warpingPathMetrixHead.tail->itemArray[m].y,grProcess->warpingPathMetrixHead.tail->itemArray[m].fx,grProcess->warpingPathMetrixHead.tail->itemArray[1].fy);
+
     }
 
     if(isSkip || is_gesture != NONE_TYPE)
@@ -302,11 +331,15 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
         int i = 0;
         for(i = 1; i <= m; i++)
         {
-            grProcess->distanceArray[i] = DBL_MAX;
+            //if(compare_two_position(queue, *te, grProcess->startArray[i]))
+            //{
+                grProcess->distanceArray[i] = DBL_MAX;
+            //}
         }
     }
 
     //check whether the current subsequence can be determined as a temporary optimal subsequence
+    //printf("distance = %f ::::: dmin = %f\n",grProcess->distanceArray[m],*dmin);
     if(grProcess->distanceArray[m] <= threshold && grProcess->distanceArray[m] < *dmin)
     {
         *dmin = grProcess->distanceArray[m];
@@ -314,6 +347,8 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
         *te = position;
         *times = grProcess->timeArray[m];
         *timee = xt.timeStamp;
+
+        //printf("dmin=%lf:::te=%d:::ts=%d:::timee=%d:::times=%d:::time=%d\n",*dmin,*te,*ts,*timee,*times,*timee-*times);
     }
     if(isWriteDistance)
     {
@@ -321,6 +356,9 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
     }
     if(isPrint)
         printf("%d::distance = %lf::start = %d::start = %d::end = %d\n", xt.pktNumber, grProcess->distanceArray[m], grProcess->startArray[m],*ts,*te);
+        //printf("%d::distance = %lf::start = %d::time span = %d\n", xt.pktNumber, grProcess->distanceArray[m], grProcess->startArray[m],*timee - *times);
+
+ //printf("start = %d::end = %d\n", *timee , *times);
 
     // replace the d with d', and s with s'
     double *dtmp = grProcess->distanceArray;
@@ -338,12 +376,6 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
     return is_gesture;
 }
 
-/**
-*TASK:to compute the angle of rotation by the data of gyroscope
-*start:the start position of the recognized subsequence in queue
-*end:the end position of the recognized subsequence in queue
-*queue:user data sequence
-*/
 double getDegreeFromGyro(int start, int end, SqQueue* queue)
 {
     int i = start;
@@ -359,11 +391,6 @@ double getDegreeFromGyro(int start, int end, SqQueue* queue)
     return degree ;
 }
 
-/**
-*TASK:the traditional DTW distance computation
-*og:the structure of a defined gesture
-*head:a sequence of user data
-*/
 double compute_traditional_DTW(OriginalGesture *og, DataHeadNode *head)
 {
     DataNode *templateP = og->head->head;
@@ -421,34 +448,36 @@ double compute_traditional_DTW(OriginalGesture *og, DataHeadNode *head)
         inputP = inputP->next;
         templateP = og->head->head;
     }
+    //printf("!!!!!!!!!!!!!!!!!!!!!%f!!!!!!!!!!!!!!!!!!!!\n",distanceMetrix[inputLength - 1][templateLength - 1]);
     return distanceMetrix[inputLength - 1][templateLength - 1];
 }
 
-
+//Transfer raw user mag data in SqQueue into DataHeadNode, convenient for the normalization of user mag data.
 DataHeadNode *transferSqQueueToDhn(SqQueue *queue, int start, int end)
 {
+
     bool isFirst = true;
     DataNode *tmp = NULL;
     DataNode *head = NULL;
+
+    //get the length of the part of the circular queue that needs traversing to be transfered into DataHeadNode
     int length = end - start >= 0 ? end - start  + 1 : MAX_SIZE + end - start + 1;
     int i = start;
     int j = 0;
     for(j = 0; j < length;j++)
     {
+        //pass mag values from SqQueue to PktData
         PktData *pd = (PktData*) malloc(sizeof(PktData));
-//        pd->accX = queue->accXData[i];
-//        pd->accY = queue->accYData[i];
-//        pd->accZ = queue->accZData[i];
-//        pd->gyroX = queue->gyroXData[i];
-//        pd->gyroY = queue->gyroYData[i];
-//        pd->gyroZ = queue->gyroZData[i];
+
         pd->magX = queue->magXData[i];
         pd->magY = queue->magYData[i];
         pd->magZ = queue->magZData[i];
 
+        //pass mag values from PktData to DataNode
         DataNode *dn = (DataNode*) malloc(sizeof(DataNode));
         dn->packetData = *pd;
 
+        //determine whether this step is the first step and move the pointer
         if(isFirst) {
                 isFirst = false;
                 head = dn;
@@ -462,6 +491,7 @@ DataHeadNode *transferSqQueueToDhn(SqQueue *queue, int start, int end)
     }
     tmp->next = NULL;
 
+    //pass mag values from DataNode to DataHeadNode
     DataHeadNode *dhn = (DataHeadNode*) malloc(sizeof(DataHeadNode));
     dhn->head = head;
 
@@ -470,7 +500,7 @@ DataHeadNode *transferSqQueueToDhn(SqQueue *queue, int start, int end)
 
 }
 
-//Determine whether the stack is empty
+//Determine whether the stack is empty.
 bool empty(PSTACK pS)
 {
     if(pS->pTop == NULL)//判断栈是否为空
@@ -480,32 +510,28 @@ bool empty(PSTACK pS)
 
 }
 
-// Define the Push of STACK
+// Define the Push of STACK.
 void push(PSTACK pS, DataNode *val)
 {
-    //printf("push!!!!!");
-    PNODE pNew = (PNODE)malloc(sizeof(NODE));    //    定义一个新节点，并分配内存空间
+
+    PNODE pNew = (PNODE)malloc(sizeof(NODE));
     if (NULL == pNew)
     {
         return ;
     }
 
     pNew->data = val;
-    pNew->pNext = pS->pTop;   //压栈时让栈顶指向新生成的节点
+    pNew->pNext = pS->pTop;
     pS->pTop = pNew;
-    //printf("push top !!!! %lf\t%lf\t%lf",pS->pTop->data->packetData.magX,pS->pTop->data->packetData.magY,pS->pTop->data->packetData.magZ);
 
     return;
 }
 
 
-//Define the Pop of STACK
+//Define the Pop of STACK.
 bool pop(PSTACK pS, DataNode **pVal)
 {
-    //printf("pop!!!!!!");
-    //printf("top !!!! %lf\t%lf\t%lf\n",pS->pTop->data->packetData.magX,pS->pTop->data->packetData.magY,pS->pTop->data->packetData.magZ);
-
-    if(empty(pS))//由于引进来时pS就是地址
+    if(empty(pS))
     {
         return false;
     }
@@ -514,56 +540,69 @@ bool pop(PSTACK pS, DataNode **pVal)
         (*pVal) = pS->pTop->data;
         pS->pTop = pS->pTop->pNext;
 
-        //printf("%lf\t%lf\t%lf",(*pVal)->packetData.magX,(*pVal)->packetData.magY,(*pVal)->packetData.magZ);
         return true;
     }
 }
 
+//Normalize the user's mag data according to the warping path extracted from accelerometer and gyroscope data.
 AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, int s, int e)
 {
+    //initialize the stack that is used in the process of normalization.
     STACK *StkForNormalizing = (STACK*) malloc(sizeof(STACK));
     StkForNormalizing->pBottom = NULL;
     StkForNormalizing->pTop = NULL;
 
-    //STACK *StkForAveraging = (STACK*) malloc(sizeof(STACK));
 
+    //transfer user mag data in SqQueue into DataHeadNode.
     DataHeadNode *userdhn = transferSqQueueToDhn(queue, s, e);
 
+    //pass mag values from DataHeadNode into DataNode, convenient for the normalization.
     DataNode *userdn;
     userdn = userdhn->head;
 
-    //wpTypeItemTail = (WarpingPathTypeItem*) malloc(sizeof(WarpingPathTypeItem));
 
-    //push all userdata into the normalizing stack
+    //use the stack for normalizing to do the normalization.
+
+    //push the very first set of user mag data into the normalizing stack.
     push(StkForNormalizing, userdn);
 
+
+    //push the rest of user mag data into the normalizing stack.
     DataNode *stackTop = userdn;
     while(userdn != NULL && wpTypeItemTail != NULL){
 
-        //printf("%d\n",wpTypeItemTail->type);
+
         switch (wpTypeItemTail->type){
+
+            //repeat pushing the current DataNode into STACK when the WarpingPathTypeItem is DOWN
             case PATH_DOWN:{
                 push(StkForNormalizing, stackTop);
-                //printf("!!!!%d----\n",wpTypeItemTail->type);
                 wpTypeItemTail = wpTypeItemTail->pre;
                 break;
             }
+
+            //move to the next DataNode and push that into STACK when the WarpingPathTypeItem is CORNER.
             case PATH_CORNER:{
                 userdn = userdn->next;
                 stackTop = userdn;
                 push(StkForNormalizing, userdn);
-                //printf("@@@@@%d----\n",wpTypeItemTail->type);
                 wpTypeItemTail = wpTypeItemTail->pre;
                 break;
             }
+
+            //on the appearance of continuous LEFT, average all related mag data into a DataNode and push it into STACK.
             case PATH_LEFT:{
+
+                //pop out the stackTop to participate in the averaging, as well as leaving a blank for the result of averaging.
                 pop(StkForNormalizing, &stackTop);
 
+                //initialize avrgList for the averaging of all LEFT-related mag data.
                 AverageList *avrgList = (AverageList*) malloc(sizeof(AverageList));
                 avrgList->pre = NULL;
                 avrgList->next = NULL;
                 avrgList->head = stackTop;
 
+                //pass the first LEFT-related DataNode that needs averaging to avrgList.
                 AverageList *avrgListTmp = (AverageList*) malloc(sizeof(AverageList));
                 userdn = userdn->next;
                 avrgListTmp->head = userdn;
@@ -573,7 +612,7 @@ AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, 
                 avrgList = avrgListTmp;
                 wpTypeItemTail = wpTypeItemTail->pre;
 
-                //Create a list for data that needs to be averaged.
+                //pass the rest of LEFT-related mag data to avrgList.
                 while(wpTypeItemTail != NULL && wpTypeItemTail->type == PATH_LEFT){
 
                     userdn = userdn->next;
@@ -587,8 +626,8 @@ AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, 
                     wpTypeItemTail = wpTypeItemTail->pre;
                 }
 
-                //traverse avrgList to get the number
-                //average the magdata
+                //traverse avrgList to get the number.
+                //average the LEFT-related mag data and push into STACK in the form of DataNode.
                 DataNode *averageddn = (DataNode*) malloc(sizeof(DataNode));
                 int countOfAvrglist = 0;
                 averageddn->packetData.magX = 0;
@@ -597,29 +636,28 @@ AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, 
                 while(avrgList != NULL){
                     countOfAvrglist++;
                     averageddn->packetData.magX += avrgList->head->packetData.magX;
-                    //printf("x = %lf\n",averageddn->packetData.magX);
+
                     averageddn->packetData.magY += avrgList->head->packetData.magY;
-                    //printf("y = %lf\n",averageddn->packetData.magY);
+
                     averageddn->packetData.magZ += avrgList->head->packetData.magZ;
-                    //printf("z = %lf\n",averageddn->packetData.magZ);
+
                     avrgList = avrgList->pre;
                 }
-                //printf("count = %d",countOfAvrglist);
+
                 averageddn->packetData.magX /= countOfAvrglist;
                 averageddn->packetData.magY /= countOfAvrglist;
                 averageddn->packetData.magZ /= countOfAvrglist;
                 push(StkForNormalizing, averageddn);
                 stackTop = averageddn;
-                //wpTypeItemTail = wpTypeItemTail->pre;
+
                 break;
             }
         }
 
-        //userdn = userdn->next;
 
     }
 
-    // output the normalized user magdata backwards
+    // output the normalized user mag data in the form of AverageList !!!BACKWARDS!!!
     AverageList *normalizedUserData = (AverageList*) malloc(sizeof(AverageList));
     AverageList *normalizedUserDataTmp;
 
@@ -628,7 +666,7 @@ AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, 
 
     DataNode *tmpForTraverse = NULL;
     pop(StkForNormalizing, &tmpForTraverse);
-    //printf("%lf\t%lf\t%lf",tmpForTraverse->packetData.magX,tmpForTraverse->packetData.magY,tmpForTraverse->packetData.magZ);
+
     normalizedUserData->head = tmpForTraverse;
 
     while(!empty(StkForNormalizing)){
@@ -643,22 +681,22 @@ AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, 
         normalizedUserData = normalizedUserDataTmp;
     }
 
-    //get the normalized user magdata FROM BACKWARDS
+    //get the normalized user mag data !!!FROM BACKWARDS!!!
     return normalizedUserData;
 }
 
-
+//Compute the distance between normalized user mag data and the target template.
 double compute_magdata_distance(AverageList *normalizedUserData, DataHeadNode *dhn)
 {
-    //Compute the distance between user data and template
+    //
     DataNode *dataNodeTmp = dhn->head;
     int length = dhn->length;
-
     AverageList *signalForUser = normalizedUserData;
     DataNode *signalForTmp = dataNodeTmp;
 
     double distance = 0;
 
+    //distance = ((usermag.X-tmpmag.X)^2+(usermag.Y-tmpmag.Y)^2+(usermag.Z-tmpmag.Z)^2)^0.5.
     while(signalForUser != NULL){
 
         distance = distance + pow((signalForUser->head->packetData.magX - signalForTmp->packetData.magX), 2)
