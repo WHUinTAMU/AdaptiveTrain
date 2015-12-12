@@ -57,6 +57,15 @@ void write_mag_to_file(char * fileName, double x[], double y[], double z[], doub
     fclose(stream);
 }
 
+/**
+*TASK:load a gesture from txt file
+*fileName
+*isMag:whether this txt file contain mag data
+*isMagTemlpate:whether need to load mag template file
+*magTemplateNum:number of mag template
+*gestureName: gesture name, in order to load mag template
+*
+*/
 OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag, bool isMagTemplate, int magTemplateNum, char *gestureName) {
     FILE * fp;
     /* open */
@@ -74,6 +83,7 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
     int i = 1;
     if(isMag)
     {
+        //read the acc, gyro and mag data to initialize the OriginalGesture
         while(EOF != fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%d", &tmpArray[0], &tmpArray[1], &tmpArray[2], &tmpArray[3],
                         &tmpArray[4], &tmpArray[5], &tmpArray[6], &tmpArray[7], &tmpArray[8], &tmpPktNum)) {
             PktData *pd = (PktData*) malloc(sizeof(PktData));
@@ -144,7 +154,7 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
     og->m = i - 1;
 
     i = 0;
-    if(isMagTemplate)
+    if(isMagTemplate)   //if the gesture has mag template, load them
     {
         DataHeadNode *magListHead;
         DataHeadNode *tmpMagList;
@@ -216,6 +226,9 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
     return og;
 }
 
+/**
+*TASK:load the parameter of a gesture(threshold and time limit)
+*/
 CustomGestureParameter read_custom_gesture_parameter(char * fileName)
 {
     FILE * fp;
@@ -234,6 +247,9 @@ CustomGestureParameter read_custom_gesture_parameter(char * fileName)
     return *cgp;
 }
 
+/**
+*save user acc and gyro and mag template into txt file
+*/
 void save_user_template(char * fileName, DataHeadNode *dataHeadNode)
 {
     DataNode *ptr = dataHeadNode->head;
@@ -263,6 +279,9 @@ void write_distance_to_file(char * fileName, int num, double d, bool is)
     fclose(stream);
 }
 
+/**
+*save a new gesture into list.txt
+*/
 void insert_new_custom_gesture_item(CustomGestureItem item)
 {
     FILE *stream = fopen("./custom_gesture/list.txt", "a+");
@@ -271,6 +290,9 @@ void insert_new_custom_gesture_item(CustomGestureItem item)
     fclose(stream);
 }
 
+/**
+*load all gesture from list.txt
+*/
 void load_custom_gesture_list(CustomGestureList *cList)
 {
     FILE * fp;
@@ -295,7 +317,6 @@ void load_custom_gesture_list(CustomGestureList *cList)
         item->gestureFunction = type;
         item->gestureName = cgName;
         item->magNum = magNum;
-        //printf("load %s\n",item->gestureName);
 
         if(isFirst)
         {
@@ -311,12 +332,6 @@ void load_custom_gesture_list(CustomGestureList *cList)
         i++;
     }
     p->next = NULL;
-//    p = cList->head;
-//    while(p != NULL)
-//    {
-//        printf("load %s\n",p->gestureName);
-//        p = p->next;
-//    }
 
     /* close */
     fclose(fp);
@@ -324,6 +339,9 @@ void load_custom_gesture_list(CustomGestureList *cList)
     cList->length = i;
 }
 
+/**
+*save user gesture parameters into txt file
+*/
 void save_user_template_parameter(double threshold, int timeSpan, char * name)
 {
     FILE *stream = fopen(name, "a+");
@@ -331,6 +349,9 @@ void save_user_template_parameter(double threshold, int timeSpan, char * name)
     fclose(stream);
 }
 
+/**
+*save a normalized mag template into txt file
+*/
 void save_mag_template(char * fileName, AverageList *userMagData)
 {
     FILE *stream = fopen(fileName, "a+");
@@ -343,6 +364,9 @@ void save_mag_template(char * fileName, AverageList *userMagData)
     fclose(stream);
 }
 
+/**
+*save a path just for debug
+*/
 void save_path_template(char *pathFileName,WarpingPathTypeItem * pathList1)
 {
     FILE *stream = fopen(pathFileName, "a+");

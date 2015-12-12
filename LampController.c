@@ -1,9 +1,15 @@
 #include "LampController.h"
 
+//the initial states of these lamp
 extern bool onValue[4] = {true,true,true,true};
 extern int briValue[4] = {254,254,254,254};
 extern int hueValue[4] = {31767,31767,31767,31767};
 
+/**
+*TASK:based on the gesture, create the command and control the lamps
+*stateType:ON_OFF_TYPE, BRI_UP_TYPE, BRI_DOWN_TYPE, HUE_UP_TYPE, HUE_DOWN_TYPE
+*target:the number of  lamp, start from 0
+*/
 bool createCommand(int stateType, int target)
 {
     cJSON * pJsonRoot = NULL;
