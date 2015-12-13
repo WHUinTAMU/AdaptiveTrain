@@ -8,8 +8,7 @@
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_eigen.h>
 
-
-//MATRIX
+/** Matrix operations implemented by GSL library **/
 gsl_matrix * createEmptyMatrix(int row, int column);
 
 gsl_matrix * copyMatrix(gsl_matrix * m);

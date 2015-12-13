@@ -1,8 +1,14 @@
+/** Packet storage in queue or list.
+    Author: Amy
+ */
 #include "DataNode.h"
 
-SqQueue* create_empty_queue() {
+/** Packet queue operations **/
+SqQueue* create_empty_queue()
+{
     SqQueue* queue = (SqQueue* ) malloc(sizeof(SqQueue));
-    if (NULL == queue) {
+    if (NULL == queue)
+    {
         printf("\n Queue creation failed \n");
         exit(-1);
     }
@@ -10,16 +16,20 @@ SqQueue* create_empty_queue() {
     return queue;
 }
 
-bool is_empty_queue(SqQueue * queue) {
+bool is_empty_queue(SqQueue * queue)
+{
     return (queue->front == queue->rear)? true : false;
 }
 
-bool is_full_queue(SqQueue * queue) {
+bool is_full_queue(SqQueue * queue)
+{
     return (queue->front == (queue->rear + 1) % MAX_SIZE)? true : false;
 }
 
-int add_to_queue(SqQueue * queue, PktData pktData) {
-    if(is_full_queue(queue)) {
+int add_to_queue(SqQueue * queue, PktData pktData)
+{
+    if(is_full_queue(queue))
+    {
         // Overwrite elements in the front
         queue->front = (queue->front + 1) % MAX_SIZE;
     }
@@ -41,35 +51,44 @@ int add_to_queue(SqQueue * queue, PktData pktData) {
     return (queue->rear - 1 + MAX_SIZE ) % MAX_SIZE;
 }
 
-bool delete_from_queue(SqQueue * queue) {
+bool delete_from_queue(SqQueue * queue)
+{
     if(is_empty_queue(queue))
         return false;
-    else {
+    else
+    {
         queue->front = (queue->front + 1) % MAX_SIZE;
         return true;
     }
 }
 
-void free_queue(SqQueue* queue) {
+void free_queue(SqQueue* queue)
+{
     free(queue);
 }
 
-void clear_queue(SqQueue* queue) {
+void clear_queue(SqQueue* queue)
+{
     queue->front = queue->rear = 0;
 }
 
-int  get_queue_length(SqQueue* queue) {
+int  get_queue_length(SqQueue* queue)
+{
     return (queue->rear - queue->front + MAX_SIZE) % MAX_SIZE;
 }
 
-bool compare_list_and_delete_queue(SqQueue* queue, int* startList, int length) {
+/** By William **/
+bool compare_list_and_delete_queue(SqQueue* queue, int* startList, int length)
+{
     int i = 0;
     int min = 0;
     int num = -1;
-    for(i = 0; i < length; i++) {
+    for(i = 0; i < length; i++)
+    {
         int distance = startList[i] - queue->front;
         distance = distance >= 0 ? distance : (MAX_SIZE - 1 - queue->front) + startList[i];
-        if(distance < min) {
+        if(distance < min)
+        {
             min = distance;
             num = i;
         }
@@ -79,7 +98,8 @@ bool compare_list_and_delete_queue(SqQueue* queue, int* startList, int length) {
     return true;    // always return true ???
 }
 
-bool compare_two_position(SqQueue* queue, int a, int b) {
+bool compare_two_position(SqQueue* queue, int a, int b)
+{
     int distanceA = a - queue->front;
     distanceA = distanceA >= 0 ? distanceA : (MAX_SIZE - 1 - queue->front) + a;
 
@@ -89,16 +109,20 @@ bool compare_two_position(SqQueue* queue, int a, int b) {
     return (distanceA >= distanceB)? true : false;
 }
 
-bool equals(PktData data1, PktData data2) {
+bool equals(PktData data1, PktData data2)
+{
     return ((data1.accX == data2.accX) && (data1.accY == data2.accY) && (data1.accZ == data2.accZ)
             && (data1.gyroX == data2.gyroX) && (data1.gyroY == data2.gyroY) && (data1.gyroZ == data2.gyroZ)
             && (data1.magX == data2.magX) && (data1.magY == data2.magY) && (data1.magZ == data2.magZ)) ?
            true : false;
 }
 
-DataHeadNode* create_list_with_head() {
+/** Packet list operations **/
+DataHeadNode* create_list_with_head()
+{
     DataHeadNode * ptr = (DataHeadNode*)malloc(sizeof(DataHeadNode));
-    if (NULL == ptr) {
+    if (NULL == ptr)
+    {
         printf("\n List creation failed \n");
         exit(-1);
     }
@@ -108,9 +132,11 @@ DataHeadNode* create_list_with_head() {
     return ptr;
 }
 
-DataNode* create_node(PktData packetData) {
+DataNode* create_node(PktData packetData)
+{
     DataNode *ptr = (DataNode*)malloc(sizeof(DataNode));
-    if (NULL == ptr) {
+    if (NULL == ptr)
+    {
         printf("\n Node creation failed \n");
         exit(-1);
     }
@@ -119,12 +145,16 @@ DataNode* create_node(PktData packetData) {
     return ptr;
 }
 
-void add_to_list_end(DataHeadNode *pHead, PktData packetData) {
+void add_to_list_end(DataHeadNode *pHead, PktData packetData)
+{
     DataNode * ptr = create_node(packetData);
-    if (pHead->tail == NULL) {
+    if (pHead->tail == NULL)
+    {
         pHead->tail = ptr;
         pHead->head = ptr;
-    } else {
+    }
+    else
+    {
         pHead->tail->next = ptr;
         pHead->tail = ptr;
     }
@@ -132,44 +162,56 @@ void add_to_list_end(DataHeadNode *pHead, PktData packetData) {
     pHead->length ++;
 }
 
-void add_to_list_head(DataHeadNode *pHead, PktData packetData) {
+void add_to_list_head(DataHeadNode *pHead, PktData packetData)
+{
     DataNode * ptr = create_node(packetData);
-    if (pHead->tail == NULL) {
+    if (pHead->tail == NULL)
+    {
         pHead->tail = ptr;
         pHead->head = ptr;
-    } else {
+    }
+    else
+    {
         ptr->next = pHead->head;
         pHead->head = ptr;
     }
     pHead->length ++;
 }
 
-bool delete_from_list_end(DataHeadNode *pHead) {
+bool delete_from_list_end(DataHeadNode *pHead)
+{
     DataNode *pNext = pHead->head;
-    if (pHead->tail == NULL) {
+    if (pHead->tail == NULL)
+    {
         printf("list is already empty!\n");
         return false;
     }
-    while(pNext->next != pHead->tail) {
+    while(pNext->next != pHead->tail)
+    {
         pNext = pNext->next;
     }
 
     pNext->next = NULL;
     free(pHead->tail);
 
-    if(pNext == pHead->head) {
+    if(pNext == pHead->head)
+    {
         pHead->head = NULL;
         pHead->tail = NULL;
-    } else {
+    }
+    else
+    {
         pHead->tail = pNext;
     }
     pHead->length --;
     return true;
 }
 
-bool delete_from_list_head(DataHeadNode *pHead) {
+bool delete_from_list_head(DataHeadNode *pHead)
+{
     DataNode *pNext;
-    if (pHead->head == NULL) {
+    if (pHead->head == NULL)
+    {
         printf("list is already empty\n");
         return false;
     }
@@ -177,66 +219,78 @@ bool delete_from_list_head(DataHeadNode *pHead) {
     pHead->head = pNext->next;
 
     free(pNext);
-    if(pHead->head == NULL) {
+    if(pHead->head == NULL)
+    {
         pHead->tail = NULL;
     }
     pHead->length --;
     return true;
 }
 
-void print_list(DataHeadNode *pHead) {
+void print_list(DataHeadNode *pHead)
+{
     DataNode *ptr = pHead->head;
     printf("\n -------Printing list Start------- \n");
     printf("List length: %d\n", pHead->length);
-    while (ptr != NULL) {
+    while (ptr != NULL)
+    {
         print_pktData(ptr->packetData);
         ptr = ptr->next;
     }
     printf("\n -------Printing list End------- \n");
 }
 
-void print_pktData(PktData packetData) {
+void print_pktData(PktData packetData)
+{
     printf("%ld, %ld, %5f, %5f, %5f, %5f, %5f, %5f, %4f, %4f, %4f, %d, %d, %d, %d\n",
            packetData.pktNumber, packetData.timeStamp,
            packetData.accX, packetData.accY, packetData.accZ,
            packetData.gyroX, packetData.gyroY, packetData.gyroZ,
            packetData.magX, packetData.magY, packetData.magZ,
            packetData.rssiData1, packetData.rssiData2, packetData.rssiData3, packetData.rssiData4
-           );
+          );
 }
 
-PktData get_element_from_head(DataHeadNode *pHead) {
+PktData get_element_from_head(DataHeadNode *pHead)
+{
     DataNode * p = pHead->head;
     PktData pktData = {0.0};
-    if (p == NULL) {
+    if (p == NULL)
+    {
         printf("empty list\n");
         return pktData;
     }
     return p->packetData;
 }
 
-PktData get_element_from_end( DataHeadNode *pHead) {
+PktData get_element_from_end( DataHeadNode *pHead)
+{
     DataNode * p = pHead->tail;
     PktData pktData = {0.0};
-    if (p == NULL) {
+    if (p == NULL)
+    {
         printf("empty list\n");
         return pktData;
     }
     return p->packetData;
 }
 
-void clear_list(DataHeadNode *pHead) {
-    if(pHead == NULL) {
+void clear_list(DataHeadNode *pHead)
+{
+    if(pHead == NULL)
+    {
         return;
     }
     DataNode *pNext = pHead->head;
     DataNode *ptr = NULL;
 
-    if (pNext == NULL) {
+    if (pNext == NULL)
+    {
         return;
     }
 
-    while (pNext != NULL) {
+    while (pNext != NULL)
+    {
         ptr = pNext->next;
         free(pNext);
         pNext = ptr;
@@ -251,7 +305,8 @@ void clear_list(DataHeadNode *pHead) {
     printf("clear data list done\n");
 }
 
-void free_list(DataHeadNode *pHead) {
+void free_list(DataHeadNode *pHead)
+{
     clear_list(pHead);
     if(pHead != NULL)
         free(pHead);
@@ -259,16 +314,19 @@ void free_list(DataHeadNode *pHead) {
     printf("free data list done\n");
 }
 
-//the headNode stores the length of the list, get array of magdata
-void fillMagDataArray(DataHeadNode* pHead, double magDataX[], double magDataY[], double magDataZ[]) {
+/** Create an array of magnetometer data from list **/
+void fillMagDataArray(DataHeadNode* pHead, double magDataX[], double magDataY[], double magDataZ[])
+{
     int length = pHead->length;
-    if(length <= 0) {
+    if(length <= 0)
+    {
         printf("Empty list, cannot get data array!\n");
         return;
     }
     int i = 0;
     DataNode * ptr = pHead->head;
-    while(ptr != NULL) {
+    while(ptr != NULL)
+    {
         magDataX[i] = ptr->packetData.magX;
         magDataY[i] = ptr->packetData.magY;
         magDataZ[i] = ptr->packetData.magZ;
@@ -280,7 +338,8 @@ void fillMagDataArray(DataHeadNode* pHead, double magDataX[], double magDataY[],
         printf("pay attention, might miss some magnetic data!\n");
 }
 
-//int main(void) {
+/** Test for queue operations
+//  int main(void) {
 //	SqQueue* queue = create_empty_queue();
 //	PktData pktData;
 //
@@ -316,50 +375,4 @@ void fillMagDataArray(DataHeadNode* pHead, double magDataX[], double magDataY[],
 //
 //	free(queue);
 //}
-
-//int main(void)
-//{
-//	int i = 0, ret = 0;
-//	 DataNode *ptr = NULL;
-//
-//	print_list();
-//
-//	for (i = 5; i<10; i++)
-//		add_to_list(i, true);
-//
-//	print_list();
-//
-//	for (i = 4; i>0; i--)
-//		add_to_list(i, false);
-//
-//	print_list();
-//
-//	for (i = 1; i<10; i += 4)
-//	{
-//		ptr = search_in_list(i, NULL);
-//		if (NULL == ptr)
-//		{
-//			printf("\n Search [packetData = %d] failed, no such element found\n", i);
-//		}
-//		else
-//		{
-//			printf("\n Search passed [packetData = %d]\n", ptr->packetData);
-//		}
-//
-//		print_list();
-//
-//		ret = delete_from_list(i);
-//		if (ret != 0)
-//		{
-//			printf("\n delete [packetData = %d] failed, no such element found\n", i);
-//		}
-//		else
-//		{
-//			printf("\n delete [packetData = %d]  passed \n", i);
-//		}
-//
-//		print_list();
-//	}
-//
-//	return 0;
-//}
+**/

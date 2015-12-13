@@ -63,69 +63,76 @@
 /**
 *the structure for the item in the list of warping path
 */
-typedef struct warpingPathTypeItem{
+typedef struct warpingPathTypeItem
+{
     int type;                           //PATH_LEFT, PATH_DOWN or PATH_CORNER
     struct warpingPathTypeItem *next;   //point for making list
     struct warpingPathTypeItem *pre;
     int position;                       // the position of x
     int y;                              // the position of y
-}WarpingPathTypeItem;
+} WarpingPathTypeItem;
 
 /**
 *the structure for the item in the matrix of dynamic time warping
 */
-typedef struct warpingPathItem{
+typedef struct warpingPathItem
+{
     int x;                              //the position of x
     int y;                              //the position of y
     int fx;                             //the position of x of the last place (where the current data is from)
     int fy;                             //the position of y of the last place (where the current data is from)
     int path;                           //PATH_LEFT, PATH_DOWN or PATH_CORNER
-}WarpingPathItem;
+} WarpingPathItem;
 
 /**
 *the structure of a single vertical list in the dynamic time warping matrix
 */
-typedef struct warpingPathList{
+typedef struct warpingPathList
+{
     int lengthY;                        //the length of this list in the y direction
     WarpingPathItem *itemArray;         //the head point of the list
     int position;                       //the x position
     struct warpingPathList *next;       //point for making list
     struct warpingPathList *pre;
-}WarpingPathList;
+} WarpingPathList;
 
 /**
 *the structure of the dynamic time warping matrix
 */
-typedef struct warpingPathListHead{
+typedef struct warpingPathListHead
+{
     WarpingPathList *head;
     WarpingPathList *tail;
     int length;                         //the length of the matrix in x direction
     long int headNum;                   //the position of the first data in the matrix in the user data queue
 
-}WarpingPathListHead;
+} WarpingPathListHead;
 
 /**
 *original gesture model struct
 */
-typedef struct originalGesture{
+typedef struct originalGesture
+{
     DataHeadNode *head;                 //the head node of the list of the model data
     DataHeadNode *magListHead;
     int magNum;
     int m;                              // the length of the list
-}OriginalGesture;
+} OriginalGesture;
 
 /**
 *the structure for custom gesture
 */
-typedef struct customGestureParameter{
+typedef struct customGestureParameter
+{
     double threshold;
     int timeSpan;
-}CustomGestureParameter;
+} CustomGestureParameter;
 
 /**
 *the process struct of one kind of gesture
 */
-typedef struct gestureRecognitionProcess{
+typedef struct gestureRecognitionProcess
+{
     OriginalGesture originalGesture;    // the gesture model struct
     double *distanceArray;              //array d
     double *distanceArrayLast;          //array d'
@@ -147,26 +154,26 @@ typedef struct gestureRecognitionProcess{
     WarpingPathListHead warpingPathMetrixHead;//the dynamic time warping matrix for the temporary optimal subsequence
     WarpingPathItem *warpingPathArray;  //the current path list
 
-}GRProcess;
+} GRProcess;
 
 /**
 *the struct for averaging and averaged mag data.
 */
 typedef struct averageList
 {
- DataNode *head;
- struct averageList *next;
- struct averageList *pre;
- }AverageList;
+    DataNode *head;
+    struct averageList *next;
+    struct averageList *pre;
+} AverageList;
 
 /**
 *the struct of the node of the stack for normalizing raw mag data.
 */
 typedef struct Node
 {
-  DataNode *data;
-  struct Node *pNext;
-}NODE,*PNODE;
+    DataNode *data;
+    struct Node *pNext;
+} NODE,*PNODE;
 
 /**
 *the struct of the stack for normalizing raw mag data.
@@ -175,7 +182,7 @@ typedef struct Stack
 {
     PNODE pTop;
     PNODE pBottom;
-}STACK,*PSTACK;
+} STACK,*PSTACK;
 
 /**
 *TASK:the process struct of one kind of gesture

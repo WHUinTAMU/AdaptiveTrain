@@ -29,28 +29,25 @@ bool isCalibratorInitialized = false;
 
 GRProcess *grpHead = NULL;// the list of the custom gestures that have been loaded to the system
 
-//1. collect initial data in MAG_CALI_TIME seconds
-//2. do calibration for initial data
-//3. if calibrator is invalid, repeat step 1.
-/* void initCalibrator(HANDLE hComm) {
+/** Initialize calibrator and heading.
+ * 1. collect initial data in MAG_CALI_TIME seconds
+ * 2. do calibration for initial data
+ * 3. if calibrator is invalid, repeat step 1.
+ * void initCalibrator(HANDLE hComm) {
  *     printf("\n=========================  Initialize Calibrator  =====================\n");
  *     PktData pktData;
- *
  *     //Mag data list for initialization
  *     DataHeadNode *ptr = create_list_with_head();
  *     int len;
  *
  *     while (true) {
  *         printf("\nCollect initial data in the next %d seconds ...... \n\n", MAG_CALI_TIME);
- *
  *         //Before read, flush the buffer.
  *         purgePort(hComm);
  *
  *         time_t timeBegin = time(NULL);
- *
  *         while (true) {
  *             pktData = blockingReadOnePacket(hComm);
- *
  *             if(equals(pktData, ZERO_PKT)) {
  *                 continue;
  *             }
@@ -68,7 +65,6 @@ GRProcess *grpHead = NULL;// the list of the custom gestures that have been load
  *         double magDataY[len] ;
  *         double magDataZ[len] ;
  *         double heading[len];
- *
  *         fillMagDataArray(ptr, magDataX, magDataY, magDataZ);
  *
  *         //pass magData to calibrator
@@ -85,13 +81,10 @@ GRProcess *grpHead = NULL;// the list of the custom gestures that have been load
  *         if(isCalibratorValid(magDataX, magDataY, magDataZ, len))
  *             break;
  *     }
- *
- *     //free all list data
  *     free_list(ptr);
  *     isCalibratorInitialized = true;
  *     printf("\n============================  Initialize Over  ========================\n");
  * }
- *
  *
  * //calculate the heading from lamp 2 to lamp 1.
  * double initHeading(HANDLE hComm) {
@@ -99,10 +92,8 @@ GRProcess *grpHead = NULL;// the list of the custom gestures that have been load
  *
  *     //the models of the four gestures
  *     char *gestureModel = "./gesture_model/target.txt";
- *
  *     //the tresholds of four model gestures
  *     double threshold = TARGET_THRESHOLD;
- *
  *     //the time limit of four model gestures
  *     double timeLimit = TARGET_TIMELIMIT;
  *
@@ -157,43 +148,33 @@ GRProcess *grpHead = NULL;// the list of the custom gestures that have been load
  *
  *         //Before read, flush the buffer.
  *         purgePort(hComm);
- *
  *         time_t timeBegin = time(NULL);
- *
  *         while (true) {
  *             pktData = blockingReadOnePacket(hComm);
  *             purgePort(hComm);
  *             if(equals(pktData, ZERO_PKT)) {
  *                 continue;
  *             }
- *
  *             int i;
- *
  *             //Notice: it will override original raw data if queue is full
  *             //int position = add_to_queue(queue, pktData);
- *
  *             //input the current data into the SPRING
  *             if(SPRING(pktData, &grp,position, queue, 0) == TARGET_TYPE) {
  *                 printf("!!!!!!!!!!!!\n");
  *                 trueNum++;
  *                 add_to_list_head(targetHead, pktData);
  *             }
- *
  *             if(trueNum >= len) {
- *
  *                 trueNum = 0;
  *                 break;
- *
  *             }
  *         }
  *
  *         //Start prepare double array for calculate calibrator
- *
  *         double magDataX[len] ;
  *         double magDataY[len] ;
  *         double magDataZ[len] ;
  *         double heading[len];
- *
  *         fillMagDataArray(targetHead, magDataX, magDataY, magDataZ);
  *
  *         write_list_to_file("C:/Users/xing/Desktop/Raw_Direction_Cal_Data.txt", targetHead);
@@ -203,21 +184,15 @@ GRProcess *grpHead = NULL;// the list of the custom gestures that have been load
  *             continue;
  *
  *         write_mag_to_file("C:/Users/xing/Desktop/Corrected_Direction_Cal_Mag_Data.txt", magDataX, magDataY, magDataZ, heading, len);
- *
- *         //consider variance
- *
  *         sum = 0.0;
  *         int i;
  *         for(i = 0; i < len; i ++) {
  *             sum += heading[i];
  *         }
- *
  *         sum = sum / len;
- *
  *         printf("\n!!!!!!!!!!!!!!!!!!!!!!2 to 1 direction is ok\n%f!!!!!!!!!!!!!!!!!!\n",sum);
  *         break;
  *     }
- *
  *     //free all list data
  *     free_list(targetHead);
  *     free_queue(queue);
@@ -256,7 +231,8 @@ GRProcess train_user_template(char *ogFileName, HANDLE hComm, char *customGestur
     int te = 1;
     int ts = 1;
     int k = 0;
-    for(k = 0; k  <= m; k++) {
+    for(k = 0; k  <= m; k++)
+    {
         distanceArrayLast[k] = DBL_MAX;
         startArrayLast[k] = 0;
         timeArrayLast[k] = 0;
@@ -289,17 +265,18 @@ GRProcess train_user_template(char *ogFileName, HANDLE hComm, char *customGestur
     int dataNum = grp.originalGesture.m > 70 ?  grp.originalGesture.m * 5 * 2 : grp.originalGesture.m * 5 * 4;
 
     char trainFileName[60];
-    sprintf(trainFileName, "./%d_train.txt"
-            ,getLocalTime());
+    sprintf(trainFileName, "./%d_train.txt", getLocalTime());
 
     DataHeadNode *trainHead = create_list_with_head();
 
     //Before read, flush the buffer.
     purgePort(hComm);
     int i = 0;
-    for(i = 0; i < dataNum; i ++) {
+    for(i = 0; i < dataNum; i ++)
+    {
         pktData = blockingReadOnePacket(hComm);
-        if(equals(pktData, ZERO_PKT)) {
+        if(equals(pktData, ZERO_PKT))
+        {
             i--;
 
             continue;
@@ -384,7 +361,8 @@ GRProcess train_user_template(char *ogFileName, HANDLE hComm, char *customGestur
     grp.warpingPathMetrixHead.tail = warpingPathList;
     grp.warpingPathMetrixHead.headNum = -1;
     grp.warpingPathMetrixHead.length = 1;
-    for(k = 0; k  <= m; k++) {
+    for(k = 0; k  <= m; k++)
+    {
         grp.distanceArrayLast[k] = DBL_MAX;
         grp.startArrayLast[k] = 0;
         grp.timeArrayLast[k] = 0;
@@ -404,27 +382,24 @@ void collect_template(HANDLE hComm)
     char correctedDataFileName[60];  	//The file stores corrected magnetic data
 
     //the models of the four gestures
-    char *gestureModel[DTW_NUM + 1] = {"./gesture_model/target.txt"
-        ,"./gesture_model/point.txt"
-        ,"./gesture_model/rotate_right_half.txt"
-        ,"./gesture_model/rotate_right_full.txt"
-        ,"./gesture_model/rotate_left_half.txt"
-        ,"./gesture_model/rotate_left_full.txt"
-        ,"./gesture_model/slide_over.txt"
-        ,"./activity_model/stand_up.txt"
-        ,"./activity_model/sit_down.txt"
-        ,"./activity_model/walk.txt"
-        ,"./gesture_model/click.txt"};
+    char *gestureModel[DTW_NUM + 1] = {"./gesture_model/target.txt","./gesture_model/point.txt",
+                                "./gesture_model/rotate_right_half.txt","./gesture_model/rotate_right_full.txt",
+                                "./gesture_model/rotate_left_half.txt","./gesture_model/rotate_left_full.txt",
+                                "./gesture_model/slide_over.txt","./activity_model/stand_up.txt",
+                                "./activity_model/sit_down.txt","./activity_model/walk.txt", "./gesture_model/click.txt"
+                                      };
 
     //the tresholds of four model gestures
-    double threshold[DTW_NUM + 1] = {TARGET_THRESHOLD,POINT_THRESHOLD,ROTATE_RIGHT_HALF_THRESHOLD
-        ,ROTATE_RIGHT_FULL_THRESHOLD,ROTATE_LEFT_HALF_THRESHOLD,ROTATE_LEFT_FULL_THRESHOLD
-        ,SLIDE_OVER_THRESHOLD,STAND_UP_THRESHOLD,SIT_DOWN_THRESHOLD,WALK_THRESHOLD,CLICK_THRESHOLD};
+    double threshold[DTW_NUM + 1] = {TARGET_THRESHOLD,POINT_THRESHOLD,ROTATE_RIGHT_HALF_THRESHOLD,
+                        ROTATE_RIGHT_FULL_THRESHOLD,ROTATE_LEFT_HALF_THRESHOLD,ROTATE_LEFT_FULL_THRESHOLD,
+                        SLIDE_OVER_THRESHOLD,STAND_UP_THRESHOLD,SIT_DOWN_THRESHOLD,WALK_THRESHOLD,CLICK_THRESHOLD
+                                    };
 
     //the time limit of four model gestures
-    double timeLimit[DTW_NUM + 1] = {TARGET_TIMELIMIT,POINT_TIMELIMIT,ROTATE_RIGHT_HALF_TIMELIMIT
-        ,ROTATE_RIGHT_FULL_TIMELIMIT,ROTATE_LEFT_HALF_TIMELIMIT,ROTATE_LEFT_FULL_TIMELIMIT
-        ,SLIDE_OVER_TIMELIMIT,STAND_UP_TIMELIMIT,SIT_DOWN_TIMELIMIT,WALK_TIMELIMIT,CLICK_TIMELIMIT};
+    double timeLimit[DTW_NUM + 1] = {TARGET_TIMELIMIT,POINT_TIMELIMIT,ROTATE_RIGHT_HALF_TIMELIMIT,
+                        ROTATE_RIGHT_FULL_TIMELIMIT,ROTATE_LEFT_HALF_TIMELIMIT,ROTATE_LEFT_FULL_TIMELIMIT,
+                        SLIDE_OVER_TIMELIMIT,STAND_UP_TIMELIMIT,SIT_DOWN_TIMELIMIT,WALK_TIMELIMIT,CLICK_TIMELIMIT
+                                    };
 
     //initialize the four models and their GestureRecognitionProcess
     //the order is :
@@ -435,7 +410,8 @@ void collect_template(HANDLE hComm)
     OriginalGesture *og[DTW_NUM + 1];
     GRProcess grp[DTW_NUM + 1];
     int gt = 0;
-    for(gt = 0; gt < DTW_NUM + 1; gt++) {
+    for(gt = 0; gt < DTW_NUM + 1; gt++)
+    {
         og[gt] = read_file_to_init_original_gesture(gestureModel[gt],false,false,0,NULL);
         int m = og[gt]->m;
         //Pay attention to Free memory !!!
@@ -449,7 +425,8 @@ void collect_template(HANDLE hComm)
         int te = 1;
         int ts = 1;
         int k = 0;
-        for(k = 0; k <= m; k++) {
+        for(k = 0; k <= m; k++)
+        {
             distanceArrayLast[k] = DBL_MAX;
             startArrayLast[k] = 0;
             timeArrayLast[k] = 0;
@@ -498,9 +475,11 @@ void collect_template(HANDLE hComm)
     PktData pktData;
     int i;
     printf("\nstart the template with shacking the MotionNet!!!\n");
-    while(true) {
+    while(true)
+    {
         pktData = blockingReadOnePacket(hComm);
-        if(equals(pktData, ZERO_PKT)) {
+        if(equals(pktData, ZERO_PKT))
+        {
             continue;
         }
         //Notice: it will override original raw data if queue is full
@@ -510,7 +489,8 @@ void collect_template(HANDLE hComm)
         {
             //input the current data into the SPRING
             int l = 0;
-            for(l = DTW_NUM; l <= DTW_NUM; l++) {
+            for(l = DTW_NUM; l <= DTW_NUM; l++)
+            {
                 springType = SPRING(pktData, &grp[l],position, queue, false, false, false, false, NULL);
             }
 
@@ -587,7 +567,8 @@ void collect_template(HANDLE hComm)
     while(magNumTmp < magNum)
     {
         pktData = blockingReadOnePacket(hComm);
-        if(equals(pktData, ZERO_PKT)) {
+        if(equals(pktData, ZERO_PKT))
+        {
             continue;
         }
 
@@ -634,27 +615,6 @@ void collect_template(HANDLE hComm)
 }
 
 /**
-*the main body of the thread
-*/
-void ThreadFunc(Params* params) {
-    int target;
-    double headingFrom2To1;
-    printf("======== SubThread %ld is watching over %s port ===========\n", GetCurrentThreadId(), params->gszPort);
-
-    HANDLE hComm = openPort(params->gszPort);
-    if (hComm == INVALID_HANDLE_VALUE) {
-        printf("failed to open serial port %s \n", params->gszPort);
-        return;
-    } else {
-        if (setupPort(hComm)) {
-            // all sensors use the same calibration matrix and offset
-            show_main_menu(hComm);
-        }
-        closePort(hComm);
-    }
-}
-
-/**
 *TASK:the main body of the control part
 */
 void control_lamp(HANDLE hComm)
@@ -674,7 +634,8 @@ void control_lamp(HANDLE hComm)
     {
         tmpGRP = grpHead;
         pktData = blockingReadOnePacket(hComm);
-        if(equals(pktData, ZERO_PKT)) {
+        if(equals(pktData, ZERO_PKT))
+        {
             continue;
         }
 
@@ -759,89 +720,92 @@ void show_load_custom_gesture(HANDLE hComm)
         scanf("%d",&select);
         switch(select)
         {
-            case 1:{
-                if(grpTmp != NULL)
-                {
-                    grpTmp->next = NULL;
-                }
-                show_main_menu(hComm);
-                break;
+        case 1:
+        {
+            if(grpTmp != NULL)
+            {
+                grpTmp->next = NULL;
             }
-            default:{
-                /**load the selected gesture*/
-                int j = 0;
-                p = list->head;
-                for(j = 1; j < select - 1;j++)
-                {
-                    p = p->next;
-                }
-                printf("name-------%s",p->gestureName);
-                char templateFileName[60],parameterFileName[60];
-                sprintf(templateFileName, "./custom_gesture/%s_template.txt" ,p->gestureName);
-                sprintf(parameterFileName, "./custom_gesture/%s_parameter.txt" ,p->gestureName);
-                OriginalGesture *og;
-                GRProcess *grp = (GRProcess*) malloc(sizeof(GRProcess));
-                og = read_file_to_init_original_gesture(templateFileName,true,true,p->magNum,p->gestureName);
-                og->magNum = p->magNum;
-                CustomGestureParameter cgparam = read_custom_gesture_parameter(parameterFileName);
-                int m = og->m;
-
-                double *distanceArray = (double *)malloc(sizeof(double) * (m + 1));
-                double *distanceArrayLast = (double *)malloc(sizeof(double) * (m + 1));
-                int *startArray = (int *)malloc(sizeof(int) * (m + 1));
-                int *startArrayLast = (int *)malloc(sizeof(int) * (m + 1));
-                long int *timeArray = (long int *)malloc(sizeof(long int) * (m + 1));
-                long int *timeArrayLast = (long int *)malloc(sizeof(long int) * (m + 1));
-                WarpingPathList *warpingPathList = (WarpingPathList*) malloc(sizeof(WarpingPathList));
-                warpingPathList->lengthY = m;
-                warpingPathList->position = -1;
-                warpingPathList->next = NULL;
-                warpingPathList->pre = NULL;
-
-                double dmin = DBL_MAX;
-                int te = 1;
-                int ts = 1;
-                int k = 0;
-                for(k = 0; k <= m; k++) {
-                    distanceArrayLast[k] = DBL_MAX;
-                    startArrayLast[k] = 0;
-                    timeArrayLast[k] = 0;
-                }
-                grp->distanceArray = distanceArray;
-                grp->distanceArrayLast = distanceArrayLast;
-                grp->dmin = dmin;
-                grp->originalGesture = *(og);
-                grp->startArray = startArray;
-                grp->startArrayLast = startArrayLast;
-                grp->timeArray = timeArray;
-                grp->timeArrayLast = timeArrayLast;
-                grp->threshold = cgparam.threshold;
-                grp->te = te;
-                grp->ts = ts;
-                grp->times = 0;
-                grp->times = 0;
-                grp->type = CUSTOM_TYPE;
-                grp->timeLimit = cgparam.timeSpan;
-                grp->name = p->gestureName;
-                grp->functionNum = p->gestureFunction;
-                grp->warpingPathMetrixHead.head = warpingPathList;
-                grp->warpingPathMetrixHead.tail = warpingPathList;
-                grp->warpingPathMetrixHead.headNum = -1;
-                grp->warpingPathMetrixHead.length = 1;
-
-                if(isFirst)
-                {
-                    isFirst = false;
-                    grpHead = grp;
-                }
-                else
-                {
-                    grpTmp->next = grp;
-                }
-                grpTmp = grp;
-                grp->next = NULL;
-                break;
+            show_main_menu(hComm);
+            break;
+        }
+        default:
+        {
+            /**load the selected gesture*/
+            int j = 0;
+            p = list->head;
+            for(j = 1; j < select - 1; j++)
+            {
+                p = p->next;
             }
+            printf("name-------%s",p->gestureName);
+            char templateFileName[60],parameterFileName[60];
+            sprintf(templateFileName, "./custom_gesture/%s_template.txt" ,p->gestureName);
+            sprintf(parameterFileName, "./custom_gesture/%s_parameter.txt" ,p->gestureName);
+            OriginalGesture *og;
+            GRProcess *grp = (GRProcess*) malloc(sizeof(GRProcess));
+            og = read_file_to_init_original_gesture(templateFileName,true,true,p->magNum,p->gestureName);
+            og->magNum = p->magNum;
+            CustomGestureParameter cgparam = read_custom_gesture_parameter(parameterFileName);
+            int m = og->m;
+
+            double *distanceArray = (double *)malloc(sizeof(double) * (m + 1));
+            double *distanceArrayLast = (double *)malloc(sizeof(double) * (m + 1));
+            int *startArray = (int *)malloc(sizeof(int) * (m + 1));
+            int *startArrayLast = (int *)malloc(sizeof(int) * (m + 1));
+            long int *timeArray = (long int *)malloc(sizeof(long int) * (m + 1));
+            long int *timeArrayLast = (long int *)malloc(sizeof(long int) * (m + 1));
+            WarpingPathList *warpingPathList = (WarpingPathList*) malloc(sizeof(WarpingPathList));
+            warpingPathList->lengthY = m;
+            warpingPathList->position = -1;
+            warpingPathList->next = NULL;
+            warpingPathList->pre = NULL;
+
+            double dmin = DBL_MAX;
+            int te = 1;
+            int ts = 1;
+            int k = 0;
+            for(k = 0; k <= m; k++)
+            {
+                distanceArrayLast[k] = DBL_MAX;
+                startArrayLast[k] = 0;
+                timeArrayLast[k] = 0;
+            }
+            grp->distanceArray = distanceArray;
+            grp->distanceArrayLast = distanceArrayLast;
+            grp->dmin = dmin;
+            grp->originalGesture = *(og);
+            grp->startArray = startArray;
+            grp->startArrayLast = startArrayLast;
+            grp->timeArray = timeArray;
+            grp->timeArrayLast = timeArrayLast;
+            grp->threshold = cgparam.threshold;
+            grp->te = te;
+            grp->ts = ts;
+            grp->times = 0;
+            grp->times = 0;
+            grp->type = CUSTOM_TYPE;
+            grp->timeLimit = cgparam.timeSpan;
+            grp->name = p->gestureName;
+            grp->functionNum = p->gestureFunction;
+            grp->warpingPathMetrixHead.head = warpingPathList;
+            grp->warpingPathMetrixHead.tail = warpingPathList;
+            grp->warpingPathMetrixHead.headNum = -1;
+            grp->warpingPathMetrixHead.length = 1;
+
+            if(isFirst)
+            {
+                isFirst = false;
+                grpHead = grp;
+            }
+            else
+            {
+                grpTmp->next = grp;
+            }
+            grpTmp = grp;
+            grp->next = NULL;
+            break;
+        }
         }
     }
 }
@@ -861,39 +825,71 @@ void show_main_menu(HANDLE hComm)
 
     switch(selectItem)
     {
-        case 1:control_lamp(hComm);break;/**start the thread to run control lamp*/
-        case 2:collect_template(hComm);break;/**run the custom gesture creating function*/
-        case 3:show_load_custom_gesture(hComm);break;
+    case 1:
+        control_lamp(hComm);
+        break;/**start the thread to run control lamp*/
+    case 2:
+        collect_template(hComm);
+        break;/**run the custom gesture creating function*/
+    case 3:
+        show_load_custom_gesture(hComm);
+        break;
     }
 }
 
-int main(int argc, char *argv[]) {
+/**
+*the main body of the thread
+*/
+void ThreadFunc(Params* params)
+{
+    int target;
+    double headingFrom2To1;
+    printf("======== SubThread %ld is watching over %s port ===========\n", GetCurrentThreadId(), params->gszPort);
+
+    HANDLE hComm = openPort(params->gszPort);
+    if (hComm == INVALID_HANDLE_VALUE)
+    {
+        printf("failed to open serial port %s \n", params->gszPort);
+        return;
+    }
+    else
+    {
+        if (setupPort(hComm))
+        {
+            // all sensors use the same calibration matrix and offset
+            show_main_menu(hComm);
+        }
+        closePort(hComm);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    /** Initialize Hue lamp system */
     if(getBridgeIP() == 1)
     {
-		printf("get bridge IP succeed\n");
+        printf("get bridge IP succeed\n");
     }
 
-	if(getUserName("{\"devicetype\":\"my_hue_app#iphone peter\"}"))
+    if(getUserName("{\"devicetype\":\"my_hue_app#iphone peter\"}"))
     {
-    	printf("get username succeed\n");
+        printf("get username succeed\n");
     }
 
-    //printf("how many sensors do you have :\n");
+    // Now we only have a wrist sensor, we can also add thigh sensor in the future.
     int portCount = 1;
-    //scanf("%d", &portCount);
 
     HANDLE handle[portCount];
     Params params[portCount];
 
-    //Consider enum
     int sensorType[2] = {WRIST_TYPE,THIGH_TYPE};
 
-    int portId;     //e.g Com#3 's portId is 3.
+    int portId;     //e.g com#3 's portId is 3.
     int i;
-    for(i = 0; i < portCount; i ++) {
+    for(i = 0; i < portCount; i ++)
+    {
         Params param;
-
-        printf("input the port COM number: \n");
+        printf("input the bluetooth port COM number: \n");
         scanf("%d", &portId);
         sprintf(param.gszPort, "\\\\.\\com%d" ,portId);
 
@@ -902,7 +898,6 @@ int main(int argc, char *argv[]) {
 
         param.sensorType = sensorType[i];
         params[i] = param;
-        //printf("Param %d : %s,  %d \n", i, params[i].gszPort, params[i].magDataNum);
     }
     for(i = 0; i < portCount; i ++)
         handle[i] = (HANDLE) _beginthreadex(NULL, 0, ThreadFunc, &(params[i]), 0, NULL);
@@ -915,6 +910,3 @@ int main(int argc, char *argv[]) {
     system("pause");
     return 0;
 }
-
-
-

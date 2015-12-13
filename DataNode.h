@@ -1,20 +1,26 @@
 #ifndef DATANODE_H
 #define DATANODE_H
 
+/** Sub-thread (controlling separate sensors) parameters definition,
+    packetData definition, sequence queue and linked list data structure definitions **/
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
+// SensorType values
 #define WRIST_TYPE 0
 #define THIGH_TYPE 1
 
-typedef struct multiParam{
+// When initialize a new thread, we need many parameters.
+typedef struct multiParam
+{
     char gszPort[20];
-    int magDataNum;
+    int magDataNum;     // The number of packets we want to collect.
     int sensorType;
-}Params;
+} Params;
 
-typedef struct packetData {
+typedef struct packetData
+{
     double accX;
     double accY;
     double accZ;
@@ -36,24 +42,25 @@ typedef struct packetData {
 
 ///////////////////////////////////// Data Queue ///////////////////////////////////////
 #define MAX_SIZE 5001
-//circle queue whose length is ( MAX_SIZE - 1 ), use one element space to distinguish empty and full.
-typedef struct {
-	double accXData[MAX_SIZE];
-	double gyroXData[MAX_SIZE];
-	double magXData[MAX_SIZE];
+// Circle queue whose length is ( MAX_SIZE - 1 ), use one element space to distinguish empty and full.
+typedef struct
+{
+    double accXData[MAX_SIZE];
+    double gyroXData[MAX_SIZE];
+    double magXData[MAX_SIZE];
 
-	double accYData[MAX_SIZE];
-	double gyroYData[MAX_SIZE];
-	double magYData[MAX_SIZE];
+    double accYData[MAX_SIZE];
+    double gyroYData[MAX_SIZE];
+    double magYData[MAX_SIZE];
 
-	double accZData[MAX_SIZE];
-	double gyroZData[MAX_SIZE];
-	double magZData[MAX_SIZE];
+    double accZData[MAX_SIZE];
+    double gyroZData[MAX_SIZE];
+    double magZData[MAX_SIZE];
 
-	long timeStamp[MAX_SIZE];
+    long timeStamp[MAX_SIZE];
 
-	int front, rear;
-}SqQueue;
+    int front, rear;
+} SqQueue;
 
 SqQueue* create_empty_queue();
 
@@ -77,22 +84,24 @@ bool compare_two_position(SqQueue* queue, int a, int b);
 
 
 ///////////////////////////////////// DataNode List ///////////////////////////////////////
-typedef struct dataNode {
+typedef struct dataNode
+{
     PktData packetData;
     struct dataNode *next;
 } DataNode;
 
-typedef struct dataHeadNode {
+typedef struct dataHeadNode
+{
     int length;
     DataNode * head;
     DataNode * tail;
     struct dataHeadNode *next;
 } DataHeadNode;
 
-//Compare 2 packet data, if all their fields are the same, return true.
+// Compare 2 packet data, if all their fields are the same, return true.
 bool equals(PktData data1, PktData data2);
 
-//Create an empty list with the headNode that stores the count of the nodes.
+// Create an empty list with the headNode that stores the count of the nodes.
 DataHeadNode* create_list_with_head();
 
 DataNode* create_node(PktData packetData);
@@ -117,7 +126,7 @@ void clear_list( DataHeadNode *pHead);
 
 void free_list(DataHeadNode *pHead);
 
-//Get 3D magnetic data array from list
+// Get magnetometer data array from list.
 void fillMagDataArray(DataHeadNode* pHead, double magDataX[], double magDataY[], double magDataZ[]);
 
 #endif // DATANODE_H

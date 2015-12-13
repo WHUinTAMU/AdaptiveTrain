@@ -1,7 +1,7 @@
 #ifndef PKTPARSER_H
 #define PKTPARSER_H
 
-#include <Windows.h>	//Contain definitions for SYSTEMTIME and GetSystemTime
+#include <Windows.h>
 
 #include "SerialPort.h"
 #include "DataNode.h"

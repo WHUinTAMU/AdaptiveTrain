@@ -6,6 +6,7 @@
 
 #include "GSLMatrixs.h"
 
+// Least direction cover rate to decide whether a calibration is valid.
 #define VALID_CALI_COVER_RATE 0.3
 
 bool isCalibratorValid(double X[], double Y[], double Z[], int len);

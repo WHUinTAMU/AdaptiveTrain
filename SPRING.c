@@ -23,9 +23,9 @@ void update_array(GRProcess *grp, PktData xt, int position, bool usePath)
         int startTmp;
         long int timeTmp;
         double distanceTmp = pow((xt.accX - p->packetData.accX), 2)
-        + pow((xt.accY - p->packetData.accY), 2) + pow((xt.accZ - p->packetData.accZ), 2)
-        + pow((xt.gyroX - p->packetData.gyroX), 2) + pow((xt.gyroY - p->packetData.gyroY), 2)
-        + pow((xt.gyroZ - p->packetData.gyroZ), 2);
+                             + pow((xt.accY - p->packetData.accY), 2) + pow((xt.accZ - p->packetData.accZ), 2)
+                             + pow((xt.gyroX - p->packetData.gyroX), 2) + pow((xt.gyroY - p->packetData.gyroY), 2)
+                             + pow((xt.gyroZ - p->packetData.gyroZ), 2);
 
         //record the position and path of a specific place
         WarpingPathItem *wpItem;
@@ -192,11 +192,17 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
 //                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_LEFT_HALF_TYPE;break;
 //                        case ROTATE_LEFT_FULL_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nrotate left full!!!\ndegree=%f\n\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
 //                                  getDegreeFromGyro(*ts,*te,queue),*dmin,*ts,*te,position,*timee - *times);is_gesture = ROTATE_LEFT_FULL_TYPE;break;
-                        case CLICK_TYPE:printf("\n\n!!!!!!!!\nsuccess!\nCLICK!!!\n"/*dmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
-                                 *dmin,*ts,*te,position,*timee - *times*/);is_gesture = CLICK_TYPE;break;
-                        case CUSTOM_TYPE:printf("\n\n!!!!!!!!\nsuccess!\n%s!!!\nfunction is %d!!!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n"
-                                ,grProcess->name,grProcess->functionNum
-                                 ,*dmin,*ts,*te,position,*timee - *times);is_gesture = CUSTOM_TYPE;break;
+                    case CLICK_TYPE:
+                        printf("\n\n!!!!!!!!\nsuccess!\nCLICK!!!\n"/*dmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n",
+                                 *dmin,*ts,*te,position,*timee - *times*/);
+                        is_gesture = CLICK_TYPE;
+                        break;
+                    case CUSTOM_TYPE:
+                        printf("\n\n!!!!!!!!\nsuccess!\n%s!!!\nfunction is %d!!!!!\ndmin=%f\nts=%d\nte=%d\nt=%d\ntime span=%d\n!!!!!!!!\n\n"
+                               ,grProcess->name,grProcess->functionNum
+                               ,*dmin,*ts,*te,position,*timee - *times);
+                        is_gesture = CUSTOM_TYPE;
+                        break;
 
                     }
 
@@ -214,30 +220,33 @@ int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue* queue, bool 
                             WarpingPathTypeItem *type = (WarpingPathTypeItem*) malloc(sizeof(WarpingPathTypeItem));
                             switch(tmpItem->path)
                             {
-                                case PATH_LEFT:{
+                            case PATH_LEFT:
+                            {
 
-                                    type->type = PATH_LEFT;
-                                    type->position = tmpItem->x;
-                                    type->y = tmpItem->y;
-                                    tmpWP = tmpWP->pre;
-                                    tmpItem = &(tmpWP->itemArray[itemNum]);
-                                    break;
-                                }
-                                case PATH_DOWN:{
-                                    type->type = PATH_DOWN;
-                                    type->position = tmpItem->x;
-                                    type->y = tmpItem->y;
-                                    tmpItem = &(tmpWP->itemArray[--itemNum]);
-                                    break;
-                                }
-                                case PATH_CORNER:{
-                                    type->type = PATH_CORNER;
-                                    type->position = tmpItem->x;
-                                    tmpWP = tmpWP->pre;
-                                    type->y = tmpItem->y;
-                                    tmpItem = &(tmpWP->itemArray[--itemNum]);
-                                    break;
-                                }
+                                type->type = PATH_LEFT;
+                                type->position = tmpItem->x;
+                                type->y = tmpItem->y;
+                                tmpWP = tmpWP->pre;
+                                tmpItem = &(tmpWP->itemArray[itemNum]);
+                                break;
+                            }
+                            case PATH_DOWN:
+                            {
+                                type->type = PATH_DOWN;
+                                type->position = tmpItem->x;
+                                type->y = tmpItem->y;
+                                tmpItem = &(tmpWP->itemArray[--itemNum]);
+                                break;
+                            }
+                            case PATH_CORNER:
+                            {
+                                type->type = PATH_CORNER;
+                                type->position = tmpItem->x;
+                                tmpWP = tmpWP->pre;
+                                type->y = tmpItem->y;
+                                tmpItem = &(tmpWP->itemArray[--itemNum]);
+                                break;
+                            }
                             }
 
                             if(isFirstType)
@@ -380,11 +389,11 @@ double compute_traditional_DTW(OriginalGesture *og, DataHeadNode *head)
         for(j = 0; j < templateLength; j++)
         {
             double tmpDistance = pow((templateP->packetData.accX - inputP->packetData.accX), 2)
-                + pow((templateP->packetData.accY - inputP->packetData.accY), 2)
-                + pow((templateP->packetData.accZ - inputP->packetData.accZ), 2)
-                + pow((templateP->packetData.gyroX - inputP->packetData.gyroX), 2)
-                + pow((templateP->packetData.gyroY - inputP->packetData.gyroY), 2)
-                + pow((templateP->packetData.gyroZ - inputP->packetData.gyroZ), 2);
+                                 + pow((templateP->packetData.accY - inputP->packetData.accY), 2)
+                                 + pow((templateP->packetData.accZ - inputP->packetData.accZ), 2)
+                                 + pow((templateP->packetData.gyroX - inputP->packetData.gyroX), 2)
+                                 + pow((templateP->packetData.gyroY - inputP->packetData.gyroY), 2)
+                                 + pow((templateP->packetData.gyroZ - inputP->packetData.gyroZ), 2);
 
             if(i == 0 || j == 0)
             {
@@ -436,7 +445,7 @@ DataHeadNode *transferSqQueueToDhn(SqQueue *queue, int start, int end)
     int length = end - start >= 0 ? end - start  + 1 : MAX_SIZE + end - start + 1;
     int i = start;
     int j = 0;
-    for(j = 0; j < length;j++)
+    for(j = 0; j < length; j++)
     {
         //pass mag values from SqQueue to PktData
         PktData *pd = (PktData*) malloc(sizeof(PktData));
@@ -450,16 +459,19 @@ DataHeadNode *transferSqQueueToDhn(SqQueue *queue, int start, int end)
         dn->packetData = *pd;
 
         //determine whether this step is the first step and move the pointer
-        if(isFirst) {
-                isFirst = false;
-                head = dn;
-                tmp = dn;
-            } else {
-                tmp->next = dn;
-                tmp = dn;
-            }
-            tmp->next = NULL;
-            i = (i + 1) % (MAX_SIZE - 1);
+        if(isFirst)
+        {
+            isFirst = false;
+            head = dn;
+            tmp = dn;
+        }
+        else
+        {
+            tmp->next = dn;
+            tmp = dn;
+        }
+        tmp->next = NULL;
+        i = (i + 1) % (MAX_SIZE - 1);
     }
     tmp->next = NULL;
 
@@ -538,87 +550,94 @@ AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, 
 
     //push the rest of user mag data into the normalizing stack.
     DataNode *stackTop = userdn;
-    while(userdn != NULL && wpTypeItemTail != NULL){
-        switch (wpTypeItemTail->type){
+    while(userdn != NULL && wpTypeItemTail != NULL)
+    {
+        switch (wpTypeItemTail->type)
+        {
 
-            //repeat pushing the current DataNode into STACK when the WarpingPathTypeItem is DOWN
-            case PATH_DOWN:{
-                push(StkForNormalizing, stackTop);
-                wpTypeItemTail = wpTypeItemTail->pre;
-                break;
-            }
+        //repeat pushing the current DataNode into STACK when the WarpingPathTypeItem is DOWN
+        case PATH_DOWN:
+        {
+            push(StkForNormalizing, stackTop);
+            wpTypeItemTail = wpTypeItemTail->pre;
+            break;
+        }
 
-            //move to the next DataNode and push that into STACK when the WarpingPathTypeItem is CORNER.
-            case PATH_CORNER:{
+        //move to the next DataNode and push that into STACK when the WarpingPathTypeItem is CORNER.
+        case PATH_CORNER:
+        {
+            userdn = userdn->next;
+            stackTop = userdn;
+            push(StkForNormalizing, userdn);
+            wpTypeItemTail = wpTypeItemTail->pre;
+            break;
+        }
+
+        //on the appearance of continuous LEFT, average all related mag data into a DataNode and push it into STACK.
+        case PATH_LEFT:
+        {
+
+            //pop out the stackTop to participate in the averaging, as well as leaving a blank for the result of averaging.
+            pop(StkForNormalizing, &stackTop);
+
+            //initialize avrgList for the averaging of all LEFT-related mag data.
+            AverageList *avrgList = (AverageList*) malloc(sizeof(AverageList));
+            avrgList->pre = NULL;
+            avrgList->next = NULL;
+            avrgList->head = stackTop;
+
+            //pass the first LEFT-related DataNode that needs averaging to avrgList.
+            AverageList *avrgListTmp = (AverageList*) malloc(sizeof(AverageList));
+            userdn = userdn->next;
+            avrgListTmp->head = userdn;
+            avrgList->next = avrgListTmp;
+            avrgListTmp->pre = avrgList;
+            avrgListTmp->next = NULL;
+            avrgList = avrgListTmp;
+            wpTypeItemTail = wpTypeItemTail->pre;
+
+            //pass the rest of LEFT-related mag data to avrgList.
+            while(wpTypeItemTail != NULL && wpTypeItemTail->type == PATH_LEFT)
+            {
+
                 userdn = userdn->next;
-                stackTop = userdn;
-                push(StkForNormalizing, userdn);
-                wpTypeItemTail = wpTypeItemTail->pre;
-                break;
-            }
 
-            //on the appearance of continuous LEFT, average all related mag data into a DataNode and push it into STACK.
-            case PATH_LEFT:{
-
-                //pop out the stackTop to participate in the averaging, as well as leaving a blank for the result of averaging.
-                pop(StkForNormalizing, &stackTop);
-
-                //initialize avrgList for the averaging of all LEFT-related mag data.
-                AverageList *avrgList = (AverageList*) malloc(sizeof(AverageList));
-                avrgList->pre = NULL;
-                avrgList->next = NULL;
-                avrgList->head = stackTop;
-
-                //pass the first LEFT-related DataNode that needs averaging to avrgList.
-                AverageList *avrgListTmp = (AverageList*) malloc(sizeof(AverageList));
-                userdn = userdn->next;
+                avrgListTmp = (AverageList*) malloc(sizeof(AverageList));
                 avrgListTmp->head = userdn;
                 avrgList->next = avrgListTmp;
                 avrgListTmp->pre = avrgList;
                 avrgListTmp->next = NULL;
                 avrgList = avrgListTmp;
                 wpTypeItemTail = wpTypeItemTail->pre;
-
-                //pass the rest of LEFT-related mag data to avrgList.
-                while(wpTypeItemTail != NULL && wpTypeItemTail->type == PATH_LEFT){
-
-                    userdn = userdn->next;
-
-                    avrgListTmp = (AverageList*) malloc(sizeof(AverageList));
-                    avrgListTmp->head = userdn;
-                    avrgList->next = avrgListTmp;
-                    avrgListTmp->pre = avrgList;
-                    avrgListTmp->next = NULL;
-                    avrgList = avrgListTmp;
-                    wpTypeItemTail = wpTypeItemTail->pre;
-                }
-
-                //traverse avrgList to get the number.
-                //average the LEFT-related mag data and push into STACK in the form of DataNode.
-                DataNode *averageddn = (DataNode*) malloc(sizeof(DataNode));
-                int countOfAvrglist = 0;
-                averageddn->packetData.magX = 0;
-                averageddn->packetData.magY = 0;
-                averageddn->packetData.magZ = 0;
-                while(avrgList != NULL){
-                    countOfAvrglist++;
-                    averageddn->packetData.magX += avrgList->head->packetData.magX;
-
-                    averageddn->packetData.magY += avrgList->head->packetData.magY;
-
-                    averageddn->packetData.magZ += avrgList->head->packetData.magZ;
-
-                    avrgList = avrgList->pre;
-                }
-
-                averageddn->packetData.magX /= countOfAvrglist;
-                averageddn->packetData.magY /= countOfAvrglist;
-                averageddn->packetData.magZ /= countOfAvrglist;
-                push(StkForNormalizing, averageddn);
-                stackTop = averageddn;
-
-                break;
             }
+
+            //traverse avrgList to get the number.
+            //average the LEFT-related mag data and push into STACK in the form of DataNode.
+            DataNode *averageddn = (DataNode*) malloc(sizeof(DataNode));
+            int countOfAvrglist = 0;
+            averageddn->packetData.magX = 0;
+            averageddn->packetData.magY = 0;
+            averageddn->packetData.magZ = 0;
+            while(avrgList != NULL)
+            {
+                countOfAvrglist++;
+                averageddn->packetData.magX += avrgList->head->packetData.magX;
+
+                averageddn->packetData.magY += avrgList->head->packetData.magY;
+
+                averageddn->packetData.magZ += avrgList->head->packetData.magZ;
+
+                avrgList = avrgList->pre;
+            }
+
+            averageddn->packetData.magX /= countOfAvrglist;
+            averageddn->packetData.magY /= countOfAvrglist;
+            averageddn->packetData.magZ /= countOfAvrglist;
+            push(StkForNormalizing, averageddn);
+            stackTop = averageddn;
+
+            break;
+        }
         }
 
 
@@ -636,7 +655,8 @@ AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, 
 
     normalizedUserData->head = tmpForTraverse;
 
-    while(!empty(StkForNormalizing)){
+    while(!empty(StkForNormalizing))
+    {
         //printf("while!!!!!!!!!!!!");
         pop(StkForNormalizing, &tmpForTraverse);
         //printf("%lf\t%lf\t%lf",tmpForTraverse->packetData.magX,tmpForTraverse->packetData.magY,tmpForTraverse->packetData.magZ);
@@ -663,11 +683,12 @@ double compute_magdata_distance(AverageList *normalizedUserData, DataHeadNode *d
     double distance = 0;
 
     //distance = ((usermag.X-tmpmag.X)^2+(usermag.Y-tmpmag.Y)^2+(usermag.Z-tmpmag.Z)^2)^0.5.
-    while(signalForUser != NULL){
+    while(signalForUser != NULL)
+    {
 
         distance = distance + pow((signalForUser->head->packetData.magX - signalForTmp->packetData.magX), 2)
-             +pow((signalForUser->head->packetData.magY - signalForTmp->packetData.magY), 2)
-             +pow((signalForUser->head->packetData.magZ - signalForTmp->packetData.magZ), 2);
+                   +pow((signalForUser->head->packetData.magY - signalForTmp->packetData.magY), 2)
+                   +pow((signalForUser->head->packetData.magZ - signalForTmp->packetData.magZ), 2);
 
         signalForTmp=signalForTmp->next;
         signalForUser = signalForUser->pre;

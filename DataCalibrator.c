@@ -1,16 +1,23 @@
+/** DataCalibrator: do magnetometer data calibration in C.
+    Author: Amy
+*/
+
 #include "DataCalibrator.h"
 
-// Global params, used by all sensors in the same room
+// Global parameters, used by all sensors in the same room
 gsl_vector* offset = NULL;
 gsl_matrix* w_invert = NULL;
 
-// Whether reasonable ...
-bool isCalibratorValid(double X[], double Y[], double Z[], int len) {
-    // - 90 ~ + 90  ===> 0 ~ 180
+// Decide whether a calibration is valid by bitmap.
+// After initialization and calibration, the result angles should cover most directions.
+bool isCalibratorValid(double X[], double Y[], double Z[], int len)
+{
+    // Calculate angles by calibrated magnetic data range from -90 to +90, mapped to 0 ~ 180
     int isValidBitMap[3][181] = {{0}};
     int roundX, roundY, roundZ;
     int i;
-    for(i = 0; i < len; i ++) {
+    for(i = 0; i < len; i ++)
+    {
         roundX = (int)(X[i]) + 90;
         roundY = (int)(Y[i]) + 90;
         roundZ = (int)(Z[i]) + 90;
@@ -22,12 +29,13 @@ bool isCalibratorValid(double X[], double Y[], double Z[], int len) {
         if((roundZ <= 180) && (roundZ >= 0))
             isValidBitMap[2][roundZ] = 1;
     }
-    //Now use round as count
+    // Now use round as count
     roundX = 0;
     roundY = 0;
     roundZ = 0;
 
-    for(i = 0; i <= 180; i ++) {
+    for(i = 0; i <= 180; i ++)
+    {
         if(isValidBitMap[0][i] == 1)
             roundX ++;
         if(isValidBitMap[1][i] == 1)
@@ -42,14 +50,17 @@ bool isCalibratorValid(double X[], double Y[], double Z[], int len) {
     return (coverRate > VALID_CALI_COVER_RATE) ? true : false ;
 }
 
-bool isFiniteNumber(double x) {
+// Decide whether a number is a finite number, used by calibrator.
+bool isFiniteNumber(double x)
+{
     int result = gsl_finite(x);
     if(result == 0)
         printf("invert matrix is not a real matrix!\n");
     return result;
 }
 
-gsl_vector* calculateOffset(double X[], double Y[], double Z[], int len) {
+gsl_vector* calculateOffset(double X[], double Y[], double Z[], int len)
+{
     gsl_vector * x = createVector(X, len);
     gsl_vector * y = createVector(Y, len);
     gsl_vector * z = createVector(Z, len);
@@ -131,7 +142,8 @@ gsl_vector* calculateOffset(double X[], double Y[], double Z[], int len) {
     return offsetV;
 }
 
-gsl_matrix* calculateConvertMatrix(gsl_vector* offsetV, double X[], double Y[], double Z[], int len) {
+gsl_matrix* calculateConvertMatrix(gsl_vector* offsetV, double X[], double Y[], double Z[], int len)
+{
     gsl_vector * x = createVector(X, len);
     gsl_vector * y = createVector(Y, len);
     gsl_vector * z = createVector(Z, len);
@@ -225,25 +237,30 @@ gsl_matrix* calculateConvertMatrix(gsl_vector* offsetV, double X[], double Y[], 
     freeMatrix(sqrtEvals);
     freeMatrix(mult);
     freeMatrix(invEvecs);
-    if(! isFiniteNumber(gsl_matrix_get(w_invertM, 0, 0))) {
+    if(! isFiniteNumber(gsl_matrix_get(w_invertM, 0, 0)))
+    {
         freeMatrix(w_invertM);
         return NULL;
     }
     return w_invertM;
 }
 
-void calculateCalibrator(double magDataX[], double magDataY[], double magDataZ[], int len) {
+void calculateCalibrator(double magDataX[], double magDataY[], double magDataZ[], int len)
+{
     offset = calculateOffset(magDataX,magDataY,magDataZ, len);
     w_invert = calculateConvertMatrix(offset, magDataX,magDataY,magDataZ, len);
 }
 
-void clearCalibrator() {
+void clearCalibrator()
+{
     printf("\n===========================  Start Clear Calibrator  =======================\n");
-    if(offset != NULL) {
+    if(offset != NULL)
+    {
         freeVector(offset);
         printf("clear offset\n");
     }
-    if(w_invert != NULL) {
+    if(w_invert != NULL)
+    {
         freeMatrix(w_invert);
         printf("clear invert matrix");
     }
@@ -260,7 +277,8 @@ correctedM [3][n] = W_inverted[3][3] * 	  [ magDataX';
 											magDataY';
 											magDataZ'];
 */
-bool calibrateMagData(double magDataX[], double magDataY[], double magDataZ[], double heading[], int len) {
+bool calibrateMagData(double magDataX[], double magDataY[], double magDataZ[], double heading[], int len)
+{
     if(offset == NULL || w_invert == NULL || !isFiniteNumber(gsl_matrix_get(w_invert, 0, 0)))
         return false;
 
@@ -288,7 +306,8 @@ bool calibrateMagData(double magDataX[], double magDataY[], double magDataZ[], d
     gsl_matrix * result = matrixMultiplyMatrix(w_invert, magData);
 
     int i;
-    for(i = 0; i < len; i ++) {
+    for(i = 0; i < len; i ++)
+    {
         magDataX[i] = gsl_matrix_get(result, 0, i);
         magDataY[i] = gsl_matrix_get(result, 1, i);
         magDataZ[i] = gsl_matrix_get(result, 2, i);
@@ -298,11 +317,13 @@ bool calibrateMagData(double magDataX[], double magDataY[], double magDataZ[], d
         heading[i] = heading[i] - 90;
 
         // Normalize to 0-360
-        if (heading[i] < 0) {
+        if (heading[i] < 0)
+        {
             heading[i] = 360 + heading[i];
         }
 
-        if (heading[i] > 360) {
+        if (heading[i] > 360)
+        {
             heading[i] = heading[i] - 360;
         }
     }

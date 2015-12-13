@@ -6,24 +6,35 @@
 #include "DataNode.h"
 #include "SPRING.h"
 
+void write_queue_to_file(char * fileName, SqQueue * queue);
+
+void write_list_to_file(char * fileName, DataHeadNode *pHead);
+
+void write_pkt_to_file(char * fileName, PktData pktData);
+
+void write_mag_to_file(char * fileName, double x[], double y[], double z[], double heading[], int len) ;
+
 /**
 *the structure for a custom gesture
 */
-typedef struct customGestureItem{
+typedef struct customGestureItem
+{
     char *gestureName;                  //gesture name
     int gestureFunction;                //the num of the function ON_OFF_TYPE BRI_UP_TYPE BRI_DOWN_TYPE HUE_UP_TYPE HUE_DOWN_TYPE
     int magNum;                         //the number of the mag template of this gesture
     struct customGestureItem * next;
-}CustomGestureItem;
+} CustomGestureItem;
 
 /**
 *the structure for the custom gesture list
 */
-typedef struct custemGetsureList{
+typedef struct customGetsureList
+{
     CustomGestureItem* head;
     CustomGestureItem* tail;
     int length;
-}CustomGestureList;
+} CustomGestureList;
+
 
 /**
 *TASK:load a gesture from txt file
@@ -41,13 +52,15 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
 */
 CustomGestureParameter read_custom_gesture_parameter(char * fileName);
 
-void write_queue_to_file(char * fileName, SqQueue * queue);
+/**
+*save a new gesture into list.txt
+*/
+void insert_new_custom_gesture_item(CustomGestureItem item);
 
-void write_list_to_file(char * fileName, DataHeadNode *pHead);
-
-void write_pkt_to_file(char * fileName, PktData pktData);
-
-void write_mag_to_file(char * fileName, double x[], double y[], double z[], double heading[], int len) ;
+/**
+*load all gesture from list.txt
+*/
+void load_custom_gesture_list(CustomGestureList *cList);
 
 /**
 *save user acc and gyro and mag template into txt file
@@ -58,16 +71,6 @@ void save_user_template(char * fileName, DataHeadNode *dataHeadNode);
 *save user gesture parameters into txt file
 */
 void save_user_template_parameter(double threshold, int timeSpan, char * name);
-
-/**
-*save a new gesture into list.txt
-*/
-void insert_new_custom_gesture_item(CustomGestureItem item);
-
-/**
-*load all gesture from list.txt
-*/
-void load_custom_gesture_list(CustomGestureList *cList);
 
 /**
 *TASK: save target template into a file for later use

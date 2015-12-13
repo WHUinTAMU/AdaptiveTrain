@@ -1,14 +1,18 @@
+/** Write or read files operation */
 #include "FileUtil.h"
 
-void write_queue_to_file(char * fileName, SqQueue * queue) {
+void write_queue_to_file(char * fileName, SqQueue * queue)
+{
     if(is_empty_queue(queue))
         return;
-    else {
+    else
+    {
         FILE *stream = fopen(fileName, "w+");
-        fprintf(stream, "Number\tAccX\t\tAccY\t\tAccZ\t\tGyroX\t\tGyroY\t\tGyroZ\t\tMagX\t\tMagY\t\tMagZ\r\n");
+        fprintf(stream, "QueueIndexNumber\tAccX\t\tAccY\t\tAccZ\t\tGyroX\t\tGyroY\t\tGyroZ\t\tMagX\t\tMagY\t\tMagZ\r\n");
 
         int i = queue->front;
-        while(i != queue->rear) {
+        while(i != queue->rear)
+        {
             fprintf(stream, "%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\r\n", i,
                     queue->accXData[i], queue->accYData[i], queue->accZData[i],
                     queue->gyroXData[i], queue->gyroYData[i], queue->gyroZData[i],
@@ -19,38 +23,43 @@ void write_queue_to_file(char * fileName, SqQueue * queue) {
     }
 }
 
-void write_list_to_file(char * fileName, DataHeadNode *pHead) {
+void write_list_to_file(char * fileName, DataHeadNode *pHead)
+{
     DataNode *ptr = pHead->head;
     if(ptr == NULL)
         return;
 
     PktData pktData;
     FILE *stream = fopen(fileName, "w+");
-    fprintf(stream, "AccX\t\tAccY\t\tAccZ\t\tGyroX\t\tGyroY\t\tGyroZ\t\tMagX\t\tMagY\t\tMagZ\t\tNumber\tTimeStamp\r\n");
-    while (ptr != NULL) {
+    fprintf(stream, "Number\t\tTimeStampAccX\t\tAccY\t\tAccZ\t\tGyroX\t\tGyroY\t\tGyroZ\t\tMagX\t\tMagY\t\tMagZ\t\tRSSI(1~4)\r\n");
+    while (ptr != NULL)
+    {
         pktData = ptr->packetData;
         fprintf(stream, "%ld\t%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\t%d\t%d\r\n",
-        pktData.pktNumber, pktData.timeStamp,
-        pktData.accX, pktData.accY, pktData.accZ,
-        pktData.gyroX, pktData.gyroY, pktData.gyroZ,
-        pktData.magX, pktData.magY, pktData.magZ,
-        pktData.rssiData1, pktData.rssiData2, pktData.rssiData3, pktData.rssiData4
-        );
+                pktData.pktNumber, pktData.timeStamp,
+                pktData.accX, pktData.accY, pktData.accZ,
+                pktData.gyroX, pktData.gyroY, pktData.gyroZ,
+                pktData.magX, pktData.magY, pktData.magZ,
+                pktData.rssiData1, pktData.rssiData2, pktData.rssiData3, pktData.rssiData4
+               );
         ptr = ptr->next;
     }
     fclose(stream);
 }
 
-void write_pkt_to_file(char * fileName, PktData pktData) {
+void write_pkt_to_file(char * fileName, PktData pktData)
+{
     FILE *stream = fopen(fileName, "a+");
     fprintf(stream, "%f\t%f\t%f\t%f\t%f\t%f\t%d\n", pktData.accX, pktData.accY, pktData.accZ,
             pktData.gyroX, pktData.gyroY, pktData.gyroZ, pktData.pktNumber);
     fclose(stream);
 }
 
-void write_mag_to_file(char * fileName, double x[], double y[], double z[], double heading[], int len) {
+// Write calibrated magnetic data and heading to a file.
+void write_mag_to_file(char * fileName, double x[], double y[], double z[], double heading[], int len)
+{
     FILE *stream = fopen(fileName, "w+");
-    fprintf(stream, "Number\tMagX\t\tMagY\t\tMagZ\t\tHeading\r\n");
+    fprintf(stream, "LoopCount\tMagX\t\tMagY\t\tMagZ\t\tHeading\r\n");
     int i;
     for(i = 0; i < len; i ++)
         fprintf(stream, "%d\t%f\t%f\t%f\t%.4f\r\n", i, x[i], y[i], z[i], heading[i]);
@@ -66,10 +75,13 @@ void write_mag_to_file(char * fileName, double x[], double y[], double z[], doub
 *gestureName: gesture name, in order to load mag template
 *
 */
-OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag, bool isMagTemplate, int magTemplateNum, char *gestureName) {
+OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag, bool isMagTemplate,
+        int magTemplateNum, char *gestureName)
+{
     FILE * fp;
     /* open */
-    if ((fp = fopen(fileName,"r")) == NULL) {
+    if ((fp = fopen(fileName,"r")) == NULL)
+    {
         printf("Can't open %s\n",fileName);
         exit(1);
     }
@@ -83,9 +95,11 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
     int i = 1;
     if(isMag)
     {
-        //read the acc, gyro and mag data to initialize the OriginalGesture
-        while(EOF != fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%d", &tmpArray[0], &tmpArray[1], &tmpArray[2], &tmpArray[3],
-                        &tmpArray[4], &tmpArray[5], &tmpArray[6], &tmpArray[7], &tmpArray[8], &tmpPktNum)) {
+        // Read the acc, gyro and mag data to initialize the OriginalGesture
+        while(EOF != fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%d",
+                            &tmpArray[0], &tmpArray[1], &tmpArray[2], &tmpArray[3], &tmpArray[4],
+                            &tmpArray[5], &tmpArray[6], &tmpArray[7], &tmpArray[8], &tmpPktNum))
+        {
             PktData *pd = (PktData*) malloc(sizeof(PktData));
             pd->accX = tmpArray[0];
             pd->accY = tmpArray[1];
@@ -101,11 +115,14 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
             DataNode *dn = (DataNode*) malloc(sizeof(DataNode));
             dn->packetData = *pd;
 
-            if(isFirst) {
+            if(isFirst)
+            {
                 isFirst = false;
                 head = dn;
                 tmp = dn;
-            } else {
+            }
+            else
+            {
                 tmp->next = dn;
                 tmp = dn;
             }
@@ -115,8 +132,10 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
     }
     else
     {
-        while(EOF != fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%d", &tmpArray[0], &tmpArray[1], &tmpArray[2], &tmpArray[3],
-                        &tmpArray[4], &tmpArray[5], &tmpPktNum)) {
+        while(EOF != fscanf(fp, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%d",
+                            &tmpArray[0], &tmpArray[1], &tmpArray[2], &tmpArray[3],
+                            &tmpArray[4], &tmpArray[5], &tmpPktNum))
+        {
             PktData *pd = (PktData*) malloc(sizeof(PktData));
             pd->accX = tmpArray[0];
             pd->accY = tmpArray[1];
@@ -129,11 +148,14 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
             DataNode *dn = (DataNode*) malloc(sizeof(DataNode));
             dn->packetData = *pd;
 
-            if(isFirst) {
+            if(isFirst)
+            {
                 isFirst = false;
                 head = dn;
                 tmp = dn;
-            } else {
+            }
+            else
+            {
                 tmp->next = dn;
                 tmp = dn;
             }
@@ -168,7 +190,8 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
             sprintf(magTempFileName, "./custom_gesture/%s_magTemplate_%d.txt", gestureName,j);
             FILE * fp;
             /* open */
-            if ((fp = fopen(magTempFileName,"r")) == NULL) {
+            if ((fp = fopen(magTempFileName,"r")) == NULL)
+            {
                 printf("Can't open %s\n",fileName);
                 exit(1);
             }
@@ -180,7 +203,8 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
             DataNode *head = NULL;
             int tmpPktNum = 0;
             printf("before read\n");
-            while(EOF != fscanf(fp, "%lf\t%lf\t%lf", &tmpArray[0], &tmpArray[1], &tmpArray[2])) {
+            while(EOF != fscanf(fp, "%lf\t%lf\t%lf", &tmpArray[0], &tmpArray[1], &tmpArray[2]))
+            {
                 PktData *pd = (PktData*) malloc(sizeof(PktData));
                 pd->magX = tmpArray[0];
                 pd->magY = tmpArray[1];
@@ -189,11 +213,14 @@ OriginalGesture *read_file_to_init_original_gesture(char * fileName, bool isMag,
                 DataNode *dn = (DataNode*) malloc(sizeof(DataNode));
                 dn->packetData = *pd;
 
-                if(isFirst) {
+                if(isFirst)
+                {
                     isFirst = false;
                     head = dn;
                     tmp = dn;
-                } else {
+                }
+                else
+                {
                     tmp->next = dn;
                     tmp = dn;
                 }
@@ -233,7 +260,8 @@ CustomGestureParameter read_custom_gesture_parameter(char * fileName)
 {
     FILE * fp;
     /* open */
-    if ((fp = fopen(fileName,"r")) == NULL) {
+    if ((fp = fopen(fileName,"r")) == NULL)
+    {
         printf("Can't open %s\n",fileName);
         exit(1);
     }
@@ -245,38 +273,6 @@ CustomGestureParameter read_custom_gesture_parameter(char * fileName)
     }
     printf("error happend when load custom gesture parameter\n");
     return *cgp;
-}
-
-/**
-*save user acc and gyro and mag template into txt file
-*/
-void save_user_template(char * fileName, DataHeadNode *dataHeadNode)
-{
-    DataNode *ptr = dataHeadNode->head;
-    if(ptr == NULL)
-        return;
-
-    PktData pktData;
-    FILE *stream = fopen(fileName, "w+");
-    //fprintf(stream, "AccX\t\tAccY\t\tAccZ\t\tGyroX\t\tGyroY\t\tGyroZ\t\tMagX\t\tMagY\t\tMagZ\t\tNumber\tTimeStamp\r\n");
-    int i = 0;
-    while (ptr != NULL) {
-        pktData = ptr->packetData;
-        i++;
-        fprintf(stream, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",
-        pktData.accX, pktData.accY, pktData.accZ,
-        pktData.gyroX, pktData.gyroY, pktData.gyroZ,pktData.magX,pktData.magY,pktData.magZ,i
-        );
-        ptr = ptr->next;
-    }
-    fclose(stream);
-}
-
-void write_distance_to_file(char * fileName, int num, double d, bool is)
-{
-    FILE *stream = fopen(fileName, "a+");
-    fprintf(stream, "%d\t%lf\t%d\n", num,d > DBL_MAX - 1 ? 6000 : d,is == true ? d : 0);
-    fclose(stream);
 }
 
 /**
@@ -297,7 +293,8 @@ void load_custom_gesture_list(CustomGestureList *cList)
 {
     FILE * fp;
     /* open */
-    if ((fp = fopen("./custom_gesture/list.txt","r")) == NULL) {
+    if ((fp = fopen("./custom_gesture/list.txt","r")) == NULL)
+    {
         printf("Can't open ./custom_gesture/list.txt\n");
         exit(1);
     }
@@ -340,6 +337,33 @@ void load_custom_gesture_list(CustomGestureList *cList)
 }
 
 /**
+*save user acc and gyro and mag template into txt file
+*/
+void save_user_template(char * fileName, DataHeadNode *dataHeadNode)
+{
+    DataNode *ptr = dataHeadNode->head;
+    if(ptr == NULL)
+        return;
+
+    PktData pktData;
+    FILE *stream = fopen(fileName, "w+");
+    //fprintf(stream, "AccX\t\tAccY\t\tAccZ\t\tGyroX\t\tGyroY\t\tGyroZ\t\tMagX\t\tMagY\t\tMagZ\t\tNumber\tTimeStamp\r\n");
+    int i = 0;
+    while (ptr != NULL)
+    {
+        pktData = ptr->packetData;
+        i++;
+        fprintf(stream, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n",
+                pktData.accX, pktData.accY, pktData.accZ,
+                pktData.gyroX, pktData.gyroY, pktData.gyroZ,
+                pktData.magX,pktData.magY,pktData.magZ,i
+               );
+        ptr = ptr->next;
+    }
+    fclose(stream);
+}
+
+/**
 *save user gesture parameters into txt file
 */
 void save_user_template_parameter(double threshold, int timeSpan, char * name)
@@ -357,7 +381,8 @@ void save_mag_template(char * fileName, AverageList *userMagData)
     FILE *stream = fopen(fileName, "a+");
     while(userMagData != NULL)
     {
-        fprintf(stream, "%lf\t%lf\t%lf\n", userMagData->head->packetData.magX, userMagData->head->packetData.magY, userMagData->head->packetData.magZ);
+        fprintf(stream, "%lf\t%lf\t%lf\n",
+                userMagData->head->packetData.magX, userMagData->head->packetData.magY, userMagData->head->packetData.magZ);
         userMagData = userMagData->pre;
     }
 
@@ -377,3 +402,12 @@ void save_path_template(char *pathFileName,WarpingPathTypeItem * pathList1)
     }
     fclose(stream);
 }
+
+void write_distance_to_file(char * fileName, int num, double d, bool is)
+{
+    FILE *stream = fopen(fileName, "a+");
+    fprintf(stream, "%d\t%lf\t%d\n", num,d > DBL_MAX - 1 ? 6000 : d,is == true ? d : 0);
+    fclose(stream);
+}
+
+
