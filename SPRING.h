@@ -9,7 +9,6 @@
 #include "DataNode.h"
 #include "LampController.h"
 
-//parameter of click action
 #define CLICK_THRESHOLD 800
 #define CLICK_TIMELIMIT 300
 #define CLICK_TYPE 10
@@ -55,52 +54,39 @@
 
 #define DTW_NUM 10
 
-//define for warping path type
 #define PATH_LEFT 0
 #define PATH_DOWN 1
 #define PATH_CORNER 2
 
-/**
-*the structure for the item in the list of warping path
-*/
 typedef struct warpingPathTypeItem{
-    int type;                           //PATH_LEFT, PATH_DOWN or PATH_CORNER
-    struct warpingPathTypeItem *next;   //point for making list
+    int type;
+    struct warpingPathTypeItem *next;
     struct warpingPathTypeItem *pre;
-    int position;                       // the position of x
-    int y;                              // the position of y
+    int position;
+    int y;
 }WarpingPathTypeItem;
 
-/**
-*the structure for the item in the matrix of dynamic time warping
-*/
 typedef struct warpingPathItem{
-    int x;                              //the position of x
-    int y;                              //the position of y
-    int fx;                             //the position of x of the last place (where the current data is from)
-    int fy;                             //the position of y of the last place (where the current data is from)
-    int path;                           //PATH_LEFT, PATH_DOWN or PATH_CORNER
+    int x;
+    int y;
+    int fx;
+    int fy;
+    int path;
 }WarpingPathItem;
 
-/**
-*the structure of a single vertical list in the dynamic time warping matrix
-*/
 typedef struct warpingPathList{
-    int lengthY;                        //the length of this list in the y direction
-    WarpingPathItem *itemArray;         //the head point of the list
-    int position;                       //the x position
-    struct warpingPathList *next;       //point for making list
+    int lengthY;
+    WarpingPathItem *itemArray;
+    int position;
+    struct warpingPathList *next;
     struct warpingPathList *pre;
 }WarpingPathList;
 
-/**
-*the structure of the dynamic time warping matrix
-*/
 typedef struct warpingPathListHead{
     WarpingPathList *head;
     WarpingPathList *tail;
-    int length;                         //the length of the matrix in x direction
-    long int headNum;                   //the position of the first data in the matrix in the user data queue
+    int length;
+    long int headNum;
 
 }WarpingPathListHead;
 
@@ -108,15 +94,12 @@ typedef struct warpingPathListHead{
 *original gesture model struct
 */
 typedef struct originalGesture{
-    DataHeadNode *head;                 //the head node of the list of the model data
+    DataHeadNode *head; //the head node of the list of the model data
     DataHeadNode *magListHead;
     int magNum;
-    int m;                              // the length of the list
+    int m;// the length of the list
 }OriginalGesture;
 
-/**
-*the structure for custom gesture
-*/
 typedef struct customGestureParameter{
     double threshold;
     int timeSpan;
@@ -126,29 +109,32 @@ typedef struct customGestureParameter{
 *the process struct of one kind of gesture
 */
 typedef struct gestureRecognitionProcess{
-    OriginalGesture originalGesture;    // the gesture model struct
-    double *distanceArray;              //array d
-    double *distanceArrayLast;          //array d'
-    int *startArray;                    //array s
-    int *startArrayLast;                //array s'
-    int *timeArray;                     //array s
-    int *timeArrayLast;                 //array s'
-    double dmin;                        // dmin
-    int ts;                             //ts
-    int te;                             //te
-    long int times;                     //time stamp of the start
-    long int timee;                     //time stamp of the end
-    double threshold;                   // threshold
-    int type;                           // determine which gesture it is
-    long int timeLimit;                 // time limit of a piece of right data
+    OriginalGesture originalGesture;// the gesture model struct
+    double *distanceArray;//array d
+    double *distanceArrayLast;//array d'
+    int *startArray;//array s
+    int *startArrayLast;//array s'
+    int *timeArray;//array s
+    int *timeArrayLast;//array s'
+    double dmin;// dmin
+    int ts;//ts
+    int te;//te
+    long int times;//time stamp of the start
+    long int timee;//time stamp of the end
+    double threshold;// threshold
+    int type;// determine which gesture it is
+    long int timeLimit;// time limit of a piece of right data
     struct gestureRecognitionProcess *next;
-    char *name;                         //the name of the gesture
-    int functionNum;                    //the num of the function ON_OFF_TYPE BRI_UP_TYPE BRI_DOWN_TYPE HUE_UP_TYPE HUE_DOWN_TYPE
-    WarpingPathListHead warpingPathMetrixHead;//the dynamic time warping matrix for the temporary optimal subsequence
-    WarpingPathItem *warpingPathArray;  //the current path list
+    char *name;
+    int functionNum;
+    WarpingPathListHead warpingPathMetrixHead;
+    WarpingPathItem *warpingPathArray;
 
 }GRProcess;
 
+/**
+*the struct for averaging and averaged mag data.
+*/
 typedef struct averageList
 {
  DataNode *head;
@@ -156,60 +142,65 @@ typedef struct averageList
  struct averageList *pre;
  }AverageList;
 
+/**
+*the struct of the node of the stack for normalizing raw mag data.
+*/
 typedef struct Node
 {
   DataNode *data;
   struct Node *pNext;
 }NODE,*PNODE;
 
-typedef struct Stack       //虽然产生了栈顶，和栈底，但都是垃圾数字，不是真正意义上的
+/**
+*the struct of the stack for normalizing raw mag data.
+*/
+typedef struct Stack
 {
-    PNODE pTop;//栈顶
-    PNODE pBottom;//栈底
+    PNODE pTop;
+    PNODE pBottom;
 }STACK,*PSTACK;
 
 /**
 *TASK:the process struct of one kind of gesture
 *grp:the process struct of the specific type of gesture
 *xt:the current data inputed
-*position:the position of thr current data in the queue
-*usePath:whether need to compute the warping path
 */
 void update_array(GRProcess *grProcess, PktData xt, int position, bool usePath);
 
 /**
-*TASK:the main part of the SPRING DTW algorithm
+*TASK:the main part of the DTW algorithm
 *grProcess:the process struct of the specific type of gesture
-*xt:the current data
-*position:the position of the current data in the queue
-*isSkip:(ignore this variable)
-*isWriteDistance:whether output the DTW distance to a txt file
-*isPrint:whether print the DTW details in the screen
-*usePath:whether compute the warping path
-*pathList:the point of the variable to contain the warping path
+*xt:the current data inputed
+return: the front of the queue
 */
 int SPRING(PktData xt, GRProcess *grProcess, int position, SqQueue *queue, bool isSkip, bool isWriteDistance, bool isPrint, bool usePath, WarpingPathTypeItem **pathList);
 
-/**
-*TASK:to compute the angle of rotation by the data of gyroscope
-*start:the start position of the recognized subsequence in queue
-*end:the end position of the recognized subsequence in queue
-*queue:user data sequence
-*/
 double getDegreeFromGyro(int start, int end, SqQueue *queue);
 
-/**
-*TASK:the traditional DTW distance computation
-*og:the structure of a defined gesture
-*head:a sequence of user data
-*/
 double compute_traditional_DTW(OriginalGesture *og, DataHeadNode *head);
 
-
+/**
+*TASK: normalize the user's mag data according to the warping path extracted from accelerometer and gyroscope data.
+*wpTypeItemTail: item of the warping path
+*queue: the raw mag data that needs to be normalized
+*s: start of the part to be normalized in the queue
+*e: end of the part to be normalized in the queue
+*/
 AverageList *Normalization(WarpingPathTypeItem *wpTypeItemTail, SqQueue *queue, int s, int e);
 
+/**
+*TASK:compute the distance between normalized user mag data and the target template
+*normalizedUserData: the normalized mag data
+*dhn: DataHeadNode for the target template
+*/
 double compute_magdata_distance(AverageList *normalizedUserData, DataHeadNode *dhn);
 
+/**
+*TASK: transfer raw user mag data in SqQueue into DataHeadNode, convenient for the normalization of user mag data
+*queue: the raw mag data that needs to be transformed into DataHeadNode
+*s: start of the part in the queue to be transformed
+*e: end of the part in the queue to be transformed
+*/
 DataHeadNode *transferSqQueueToDhn(SqQueue *queue, int start, int end);
 
 bool empty(PSTACK pS);
