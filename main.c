@@ -27,7 +27,7 @@ bool isCalibratorBeingInitialized = false;
 
 bool isCalibratorInitialized = false;
 
-GRProcess *grpHead = NULL;
+GRProcess *grpHead = NULL;// the list of the custom gestures that have been loaded to the system
 
 //1. collect initial data in MAG_CALI_TIME seconds
 //2. do calibration for initial data
@@ -225,7 +225,13 @@ GRProcess *grpHead = NULL;
  * }
  */
 
-GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, char *customGestureName)
+/**
+*TASK:ask the user to repeat the gesture and train the threshold and time limit
+*ogFileName:the template file name
+*hComm:the serial port
+*customGestureName:gesture name
+*/
+GRProcess train_user_template(char *ogFileName, HANDLE hComm, char *customGestureName)
 {
     OriginalGesture *og;
     GRProcess grp;
@@ -233,11 +239,13 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
     int m = og->m;
 
     OriginalGesture *normalGesture = read_file_to_init_original_gesture("./gesture_model/click.txt",false,false,0,NULL);
+
+    //use the click action to compute the new gesture' s normal distance, and then use this to compute the initial threshold
     int threshold = compute_traditional_DTW(og, normalGesture->head) / 1.3;
     int timeLimit = 200;//userTimeSpan - 1500 > 0 ? userTimeSpan - 1500 : userTimeSpan;
     printf("timeLimit = %d####################threshold = %d\n",timeLimit,threshold);
 
-    //Pay attention to Free memory !!!
+    //initialize the gesture recognition process structure
     double *distanceArray = (double *)malloc(sizeof(double) * (m + 1));
     double *distanceArrayLast = (double *)malloc(sizeof(double) * (m + 1));
     int *startArray = (int *)malloc(sizeof(int) * (m + 1));
@@ -299,7 +307,6 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
         pktData.pktNumber = i + 1;
         int position = add_to_queue(queue, pktData);
 
-        //write_pkt_to_file(stream, pktData);
         add_to_list_end(trainHead, pktData);
 
         //input the current data into the SPRING
@@ -307,14 +314,15 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
 
         if(springType == CUSTOM_TYPE)
         {
+            //record the recognized gesture parameters
             thresholdArray[customNum] = grp.distanceArray[m];
             timeSpanArray[customNum] = grp.timee - grp.times;
             customNum++;
         }
     }
-    //write_list_to_file(trainFileName, trainHead);
     free_list(trainHead);
 
+    //sort all the thresholds in the repeated period
     for(i = 0; i < customNum; i++)
     {
         int j = i;
@@ -336,6 +344,7 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
         }
     }
 
+    //use the five least distance to compute the appropriate threshold
     double thresholdTrue = 0;
     int timeSpanTrue = 0;
     for(i = 0; i < 5; i++)
@@ -345,10 +354,11 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
         printf("\n\nthe %i th  gesture choose, threshold = %f, timespan = %d\n",i,thresholdArray[i],timeSpanArray[i]);
     }
 
+    //compute the appropriate parameters
     thresholdTrue /= 5;
     timeSpanTrue /= 5;
-    grp.timeLimit = timeSpanTrue - 600 > 100 ? timeSpanTrue - 600 : timeSpanTrue;
-    grp.threshold = thresholdTrue + 60;
+    grp.timeLimit = timeSpanTrue * 0.6;//make the time limit more available
+    grp.threshold = thresholdTrue * 1.2;//make the threshold more available
 
     char paraFileName[90];
     sprintf(paraFileName, "./custom_gesture/%s_parameter.txt",customGestureName);
@@ -383,6 +393,9 @@ GRProcess trian_user_template(int userTimeSpan, char *ogFileName, HANDLE hComm, 
     return grp;
 }
 
+/**
+*TASK:the main process of create a new custom gesture
+*/
 void collect_template(HANDLE hComm)
 {
     SqQueue * queue = create_empty_queue();
@@ -517,13 +530,11 @@ void collect_template(HANDLE hComm)
                     isRecord = false;
                     printf("saving the template.....\n");
                     //delete the click data from the list and then output the list to file
-                    long timeStampTmp = queue->timeStamp[(grp[CLICK_TYPE].ts - 10 + MAX_SIZE - 1) % (MAX_SIZE - 1)];
-                    //printf("end time:%d\n",timeStampTmp);
+                    long timeStampTmp = queue->timeStamp[(grp[CLICK_TYPE].ts - 20 + MAX_SIZE - 1) % (MAX_SIZE - 1)];
 
                     DataNode *head = targetHead->head;
                     while(head->next != NULL)
                     {
-                        //printf("%d:::::%d\n",timeStampTmp,head->next->packetData.timeStamp);
                         if(head->next->packetData.timeStamp == timeStampTmp)
                         {
                             DataNode *tmpList = head->next;
@@ -536,6 +547,8 @@ void collect_template(HANDLE hComm)
                     //printf("going to save!\n");
                     char templateFileName[90];
                     sprintf(templateFileName, "./custom_gesture/%s_template.txt",customGestureName);
+
+                    //remove the useless data at the beginning
                     int j = 0;
                     for(j = 0; j < 10; j++)
                     {
@@ -544,13 +557,12 @@ void collect_template(HANDLE hComm)
                     save_user_template(templateFileName, targetHead);
 
                     int userTimeSpan = targetHead->tail->packetData.timeStamp - targetHead->head->packetData.timeStamp;
-                    //printf("start time = %d ::: end time = %d",targetHead->head->packetData.timeStamp,targetHead->tail->packetData.timeStamp);
 
                     clear_list(targetHead);
                     printf("a template has been saved!\n");
 
-                    customGRP = trian_user_template(userTimeSpan,templateFileName,hComm,customGestureName);
-                    //customGRP.functionNum = functionNum;
+                    //train the gesture
+                    customGRP = train_user_template(templateFileName,hComm,customGestureName);
 
                     clear_queue(queue);
 
@@ -560,10 +572,6 @@ void collect_template(HANDLE hComm)
                 }
             }
         }
-        //else if(hasCustom == true)
-        //{
-          //  springType = SPRING(pktData, &customGRP,position, queue, false, false, true);
-        //}
     }
 
     printf("\n\ninput the number of the target you want to recognize:\n");
@@ -574,6 +582,7 @@ void collect_template(HANDLE hComm)
     //Before read, flush the buffer.
     purgePort(hComm);
 
+    //collect the mag templates of the gesture
     WarpingPathTypeItem *pathList = (WarpingPathTypeItem *) malloc(sizeof(WarpingPathTypeItem *));
     while(magNumTmp < magNum)
     {
@@ -603,10 +612,9 @@ void collect_template(HANDLE hComm)
     }
     CustomGestureItem *item = (CustomGestureItem*) malloc(sizeof(CustomGestureItem));
     item->gestureFunction = functionNum;
-                    //printf("function num done!!!\n");
     item->gestureName = customGestureName;
     item->magNum = magNum;
-                    //printf("name done!!!\n");
+
     insert_new_custom_gesture_item(*item);
 
     int magLen = get_queue_length(queue);
@@ -625,6 +633,9 @@ void collect_template(HANDLE hComm)
     show_main_menu(hComm);
 }
 
+/**
+*the main body of the thread
+*/
 void ThreadFunc(Params* params) {
     int target;
     double headingFrom2To1;
@@ -637,13 +648,15 @@ void ThreadFunc(Params* params) {
     } else {
         if (setupPort(hComm)) {
             // all sensors use the same calibration matrix and offset
-
             show_main_menu(hComm);
         }
         closePort(hComm);
     }
 }
 
+/**
+*TASK:the main body of the control part
+*/
 void control_lamp(HANDLE hComm)
 {
     GRProcess *tmpGRP = grpHead;
@@ -685,10 +698,11 @@ void control_lamp(HANDLE hComm)
                 int targetNum = 0;
                 for(k = 0; k < tmpGRP->originalGesture.magNum; k++)
                 {
-
                     /**compute the mag distance---tmpMagList*/
                     magDistanceArray[k] = compute_magdata_distance(normalizedUserData, tmpMagList) ;
                     printf("\n\nk=%d;distance=%lf\n", k, magDistanceArray[k]);
+
+                    //compute the least mag distance one to be the target
                     if(magDistanceArray[k] < magDisMin)
                     {
                         magDisMin = magDistanceArray[k];
@@ -706,16 +720,19 @@ void control_lamp(HANDLE hComm)
     free_queue(queue);
 }
 
+/**
+*TASK:show the list of all custom gestures, and load gestures user select and initialize the GRP
+*/
 void show_load_custom_gesture(HANDLE hComm)
 {
     GRProcess *grpTmp = NULL;
     bool isFirst = true;
     while(true)
     {
-        printf("\n\n\n\n\n------------load custom gesture menu---------\n");
+        printf("\n\n\n\n\n------------load custom gesture menu----------\n");
         printf("1. back to main menu\n");
-        //read the custom gesture list and print them
 
+        //read the custom gesture list and print them
         CustomGestureList *list = (CustomGestureList*) malloc(sizeof(CustomGestureList));
         load_custom_gesture_list(list);
         int i = 0;
@@ -751,6 +768,7 @@ void show_load_custom_gesture(HANDLE hComm)
                 break;
             }
             default:{
+                /**load the selected gesture*/
                 int j = 0;
                 p = list->head;
                 for(j = 1; j < select - 1;j++)
@@ -765,11 +783,9 @@ void show_load_custom_gesture(HANDLE hComm)
                 GRProcess *grp = (GRProcess*) malloc(sizeof(GRProcess));
                 og = read_file_to_init_original_gesture(templateFileName,true,true,p->magNum,p->gestureName);
                 og->magNum = p->magNum;
-                //printf("og mag num = %d\n",og->magNum);
                 CustomGestureParameter cgparam = read_custom_gesture_parameter(parameterFileName);
                 int m = og->m;
-                //Pay attention to Free memory !!!
-                //printf("11111\n");
+
                 double *distanceArray = (double *)malloc(sizeof(double) * (m + 1));
                 double *distanceArrayLast = (double *)malloc(sizeof(double) * (m + 1));
                 int *startArray = (int *)malloc(sizeof(int) * (m + 1));
@@ -781,7 +797,7 @@ void show_load_custom_gesture(HANDLE hComm)
                 warpingPathList->position = -1;
                 warpingPathList->next = NULL;
                 warpingPathList->pre = NULL;
-                //printf("22222\n");
+
                 double dmin = DBL_MAX;
                 int te = 1;
                 int ts = 1;
@@ -808,8 +824,6 @@ void show_load_custom_gesture(HANDLE hComm)
                 grp->timeLimit = cgparam.timeSpan;
                 grp->name = p->gestureName;
                 grp->functionNum = p->gestureFunction;
-                //printf("33333\n");
-                //grp->warpingPathArray = (WarpingPathItem *) malloc(sizeof(WarpingPathItem) * (m + 1));
                 grp->warpingPathMetrixHead.head = warpingPathList;
                 grp->warpingPathMetrixHead.tail = warpingPathList;
                 grp->warpingPathMetrixHead.headNum = -1;
@@ -826,12 +840,15 @@ void show_load_custom_gesture(HANDLE hComm)
                 }
                 grpTmp = grp;
                 grp->next = NULL;
-                break;/**load the selected gesture*/
+                break;
             }
         }
     }
 }
 
+/**
+*TASK:show the main menu
+*/
 void show_main_menu(HANDLE hComm)
 {
     printf("\n\n\n\n\n------------main menu---------\n");
