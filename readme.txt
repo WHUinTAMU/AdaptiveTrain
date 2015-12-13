@@ -1,9 +1,9 @@
 ---------------------source files explanation--------------------------
 main : the main body of the program.
 
-PktParaser : 
+PktParaser : parse the IMU packets collected from MotionNet sensors.
 
-SerialPort : 
+SerialPort : collect raw packets including Acc, Gyro and Mag data from MotionNet sensors. 
 
 SPRING : the spring dtw algorithm, and mag template normalization
 
@@ -17,9 +17,9 @@ DataNode : some data structures for raw data
 
 FileUtil : some functions of file operation
 
-GSLMatrixs : 
+GSLMatrixs : implement matrix calculations for calibration.
 
-LampCmd : 
+LampCmd : find Hue lamp bridge, send HTTP request to lamps so we can control Hue lamps.
 
 LampController : create lamp control command.
 
