@@ -575,7 +575,7 @@ void collect_template(HANDLE hComm)
         //Notice: it will override original raw data if queue is full
         int position = add_to_queue(queue, pktData);
 
-        int springType = SPRING(pktData,&customGRP,position,queue, false, false, true, true, &pathList);
+        int springType = SPRING(pktData,&customGRP,position,queue, false, false, false, true, &pathList);
 
         if(springType == CUSTOM_TYPE)
         {
@@ -611,7 +611,7 @@ void collect_template(HANDLE hComm)
     free_queue(queue);
     free_list(targetHead);
 
-    show_main_menu(hComm);
+    //show_main_menu(hComm);
 }
 
 /**
@@ -645,7 +645,7 @@ void control_lamp(HANDLE hComm)
         int springType;
         while(tmpGRP != NULL)
         {
-            springType = SPRING(pktData,tmpGRP,position,queue, false, false, true, true, &pathList);
+            springType = SPRING(pktData,tmpGRP,position,queue, false, false, false, true, &pathList);
             if(springType == CUSTOM_TYPE)
             {
                 /**normalize the mag---queue,tmpGRP->originalGesture.head,tmpGRP->ts,tmpGRP->te,pathList*/
@@ -688,8 +688,12 @@ void show_load_custom_gesture(HANDLE hComm)
 {
     GRProcess *grpTmp = NULL;
     bool isFirst = true;
+    bool backToMain = false;
     while(true)
     {
+        if(backToMain)
+            break;
+
         printf("\n\n\n\n\n------------load custom gesture menu----------\n");
         printf("1. back to main menu\n");
 
@@ -726,7 +730,7 @@ void show_load_custom_gesture(HANDLE hComm)
             {
                 grpTmp->next = NULL;
             }
-            show_main_menu(hComm);
+            backToMain = true;
             break;
         }
         default:
@@ -815,26 +819,30 @@ void show_load_custom_gesture(HANDLE hComm)
 */
 void show_main_menu(HANDLE hComm)
 {
-    printf("\n\n\n\n\n------------main menu---------\n");
-    printf("1.start control system\n");
-    printf("2.create custom gesture\n");
-    printf("3.load custom gestures\n");
-
-    int selectItem;
-    scanf("%d",&selectItem);
-
-    switch(selectItem)
+    while(true)
     {
-    case 1:
-        control_lamp(hComm);
-        break;/**start the thread to run control lamp*/
-    case 2:
-        collect_template(hComm);
-        break;/**run the custom gesture creating function*/
-    case 3:
-        show_load_custom_gesture(hComm);
-        break;
+        printf("\n\n\n\n\n------------main menu---------\n");
+        printf("1.start control system\n");
+        printf("2.create custom gesture\n");
+        printf("3.load custom gestures\n");
+
+        int selectItem;
+        scanf("%d",&selectItem);
+
+        switch(selectItem)
+        {
+        case 1:
+            control_lamp(hComm);
+            break;/**start the thread to run control lamp*/
+        case 2:
+            collect_template(hComm);
+            break;/**run the custom gesture creating function*/
+        case 3:
+            show_load_custom_gesture(hComm);
+            break;
+        }
     }
+
 }
 
 /**
